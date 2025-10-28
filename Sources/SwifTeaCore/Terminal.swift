@@ -1,0 +1,86 @@
+import Foundation
+#if os(Linux)
+import Glibc
+private let STDIN_FILENO_: Int32 = 0
+#else
+import Darwin
+private let STDIN_FILENO_: Int32 = STDIN_FILENO
+#endif
+
+@discardableResult
+func setNonBlocking(_ fd: Int32, enabled: Bool) -> Int32 {
+    let flags = fcntl(fd, F_GETFL)
+    return fcntl(fd, F_SETFL, enabled ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK))
+}
+
+func setRawMode() -> termios {
+    var t = termios()
+    tcgetattr(STDIN_FILENO_, &t)
+    let original = t
+
+    // Raw-ish: disable canonical mode (ICANON) and echo (ECHO)
+    t.c_lflag &= ~(UInt(ICANON | ECHO))
+    // Optional: also disable signals: t.c_lflag &= ~UInt(ISIG)
+
+    tcsetattr(STDIN_FILENO_, TCSANOW, &t)
+    _ = setNonBlocking(STDIN_FILENO_, enabled: true)
+    return original
+}
+
+func restoreMode(_ original: termios) {
+    var t = original
+    tcsetattr(STDIN_FILENO_, TCSANOW, &t)
+    _ = setNonBlocking(STDIN_FILENO_, enabled: false)
+}
+
+@inline(__always)
+func clearScreenAndHome() {
+    // ESC[2J = clear screen; ESC[H = cursor home
+    print("\u{001B}[2J\u{001B}[H", terminator: "")
+}
+
+@inline(__always)
+func readByte() -> UInt8? {
+    var b: UInt8 = 0
+    let n = read(STDIN_FILENO_, &b, 1)
+    return (n == 1) ? b : nil
+}
+
+/// Non-blocking key decoder.
+/// Handles printable chars, Enter, Backspace, Tab, Ctrl-C, Escape, Arrow keys (ESC [ A/B/C/D).
+func readKeyEvent() -> KeyEvent? {
+    guard let first = readByte() else { return nil }
+
+    switch first {
+    case 0x03: return .ctrlC              // ^C
+    case 0x09: return .tab                // Tab
+    case 0x0A, 0x0D: return .enter       // LF/CR
+    case 0x7F: return .backspace         // Backspace (DEL)
+
+    case 0x1B: // ESC or start of sequence
+        // Attempt to read two more bytes for common CSI sequences.
+        // Tiny coalescing delay to allow non-blocking reads to gather.
+        usleep(2000)
+        let b1 = readByte()
+        let b2 = readByte()
+
+        if b1 == 0x5B { // '['
+            switch b2 {
+            case 0x41: return .upArrow    // 'A'
+            case 0x42: return .downArrow  // 'B'
+            case 0x43: return .rightArrow // 'C'
+            case 0x44: return .leftArrow  // 'D'
+            default: return .escape
+            }
+        } else {
+            return .escape
+        }
+
+    default:
+        if first >= 0x20 && first <= 0x7E { // printable ASCII
+            return .char(Character(UnicodeScalar(first)))
+        }
+        return nil
+    }
+}
+
