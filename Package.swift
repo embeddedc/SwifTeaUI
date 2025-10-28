@@ -10,6 +10,9 @@ let package = Package(
         .library(name: "SwifTeaCore", targets: ["SwifTeaCore"]),
         .executable(name: "SwifTeaCounterExample", targets: ["SwifTeaCounterExample"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-testing.git", branch: "main")
+    ],
     targets: [
         .target(
             name: "SwifTeaCore",
@@ -27,12 +30,19 @@ let package = Package(
         ),
         .testTarget(
             name: "SwifTeaCoreTests",
-            dependencies: ["SwifTeaCore"]
+            dependencies: [
+                "SwifTeaCore",
+                "SwifTeaUI",
+                .product(name: "Testing", package: "swift-testing")
+            ]
         ),
         .testTarget(
             name: "SwifTeaUITests",
-            dependencies: ["SwifTeaUI"]
+            dependencies: [
+                "SwifTeaUI",
+                .product(name:"Testing", package: "swift-testing")
+            ]
         )
-    ]
+    ],
 )
 

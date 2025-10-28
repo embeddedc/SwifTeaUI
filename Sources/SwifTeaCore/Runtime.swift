@@ -7,15 +7,18 @@ public protocol TUIView {
 }
 
 public protocol TUIApp {
-    associatedtype Model
-    associatedtype Action
+    associatedtype Model = Self
+    associatedtype Action = Never
     associatedtype Content: TUIView
 
-    var model: Model { get set }
+    // Default model access: the whole app is the model
+    var model: Model { get }
 
-    mutating func update(action: Action)
+    // UI declaration
     func view(model: Model) -> Content
 
+    // Optional reducer behavior when actions exist
+    mutating func update(action: Action)
     func mapKeyToAction(_ key: KeyEvent) -> Action?
     func shouldExit(for action: Action) -> Bool
 }
@@ -69,3 +72,18 @@ public enum SwifTea {
         }
     }
 }
+public extension SwifTea {
+        static func testRender<App: TUIApp>(_ app: App) -> String {
+                app.view(model: app.model).render()
+        }
+}
+
+public extension TUIApp where Model == Self {
+    var model: Self { self }
+}
+
+public extension TUIApp where Action == Never {
+        mutating func update(action: Action) {}
+        func mapKeyToAction(_ key:KeyEvent) -> Action? { nil }
+        func shouldExit(for action: Action) -> Bool { false }
+    }
