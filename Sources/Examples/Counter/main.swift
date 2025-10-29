@@ -8,12 +8,19 @@ struct CounterApp: TUIApp {
         case quit
         case edit(TextFieldEvent)
         case focus(FocusTarget?)
+        case focusNext
+        case focusPrevious
     }
 
     enum FocusTarget: Hashable {
         case controls
         case note
     }
+
+    private static let focusRing = FocusRing<FocusTarget>([
+        .controls,
+        .note
+    ])
 
     @State private var count = 0
     @State private var note = ""
@@ -37,6 +44,10 @@ struct CounterApp: TUIApp {
             }
         case .focus(let target):
             focusedField = target
+        case .focusNext:
+            focusedField = Self.focusRing.move(from: focusedField, direction: .forward)
+        case .focusPrevious:
+            focusedField = Self.focusRing.move(from: focusedField, direction: .backward)
         case .quit: break
         }
     }
@@ -47,6 +58,7 @@ struct CounterApp: TUIApp {
             Text("SwifTea Counter").foreground(.yellow).bolded()
             Text("Count: \(model.count)").foreground(.green)
             Text("[u] up | [d] down | [←/→] also work | [q]/[Esc]/[Ctrl-C] quit").foreground(.cyan)
+            Text("[Tab] cycle focus between controls and note input").foreground(.yellow)
             Spacer()
             Text("Type a note and press Enter:").foreground(.yellow)
             TextField("Your note...", text: $note, focus: $focusedField.isFocused(.note))
@@ -64,8 +76,9 @@ struct CounterApp: TUIApp {
         case .char("u"), .rightArrow: return .increment
         case .char("d"), .leftArrow:  return .decrement
         case .tab:
-            let nextFocus: FocusTarget? = (focusedField == .note) ? .controls : .note
-            return .focus(nextFocus)
+            return .focusNext
+        case .backTab:
+            return .focusPrevious
         case .char("q"), .ctrlC, .escape: return .quit
         default: return nil
         }

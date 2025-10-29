@@ -5,6 +5,7 @@ public enum KeyEvent: Equatable {
     case enter
     case backspace
     case tab
+    case backTab
     case escape
     case ctrlC
     case upArrow
@@ -12,4 +13,3 @@ public enum KeyEvent: Equatable {
     case leftArrow
     case rightArrow
 }
-

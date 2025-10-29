@@ -78,4 +78,36 @@ struct TextFieldTests {
         focusBinding.wrappedValue = false
         #expect(harness.field == nil)
     }
+
+    @Test("Focus ring cycles forward and backward")
+    func testFocusRingMovement() {
+        enum Field: Hashable { case controls, note, log }
+        let ring = FocusRing<Field>([.controls, .note, .log])
+
+        #expect(ring.move(from: nil, direction: .forward) == .controls)
+        #expect(ring.move(from: nil, direction: .backward) == .log)
+        #expect(ring.move(from: .controls, direction: .forward) == .note)
+        #expect(ring.move(from: .controls, direction: .backward) == .log)
+        #expect(ring.move(from: .log, direction: .forward) == .controls)
+    }
+
+    @Test("Projected focus state moves using focus ring helpers")
+    func testFocusProjectedMoves() {
+        struct FocusHarness {
+            enum Field: Hashable { case controls, note }
+            @FocusState var field: Field?
+        }
+
+        let harness = FocusHarness()
+        let ring = FocusRing<FocusHarness.Field>([.controls, .note])
+
+        harness.$field.moveForward(in: ring)
+        #expect(harness.field == .controls)
+
+        harness.$field.moveForward(in: ring)
+        #expect(harness.field == .note)
+
+        harness.$field.moveBackward(in: ring)
+        #expect(harness.field == .controls)
+    }
 }

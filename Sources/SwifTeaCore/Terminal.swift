@@ -70,6 +70,7 @@ func readKeyEvent() -> KeyEvent? {
             case 0x42: return .downArrow  // 'B'
             case 0x43: return .rightArrow // 'C'
             case 0x44: return .leftArrow  // 'D'
+            case 0x5A: return .backTab    // 'Z' (Shift+Tab)
             default: return .escape
             }
         } else {
@@ -83,4 +84,3 @@ func readKeyEvent() -> KeyEvent? {
         return nil
     }
 }
-
