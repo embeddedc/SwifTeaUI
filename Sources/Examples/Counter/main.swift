@@ -1,21 +1,22 @@
-import SwifTeaUI
 import SwifTeaCore
+import SwifTeaUI
 
 struct CounterApp: TUIApp {
-    struct Model { var count = 0 }
-    enum Action: Equatable { case increment, decrement, quit }
+    enum Action { case increment, decrement, quit }
 
-    var model = Model()
+    @State private var count = 0
+
+    var model: CounterApp { self }
 
     mutating func update(action: Action) {
         switch action {
-        case .increment: model.count += 1
-        case .decrement: model.count -= 1
+        case .increment: count += 1
+        case .decrement: count -= 1
         case .quit: break
         }
     }
 
-    func view(model: Model) -> some TUIView {
+    func view(model: CounterApp) -> some TUIView {
         VStack {
             Text("SwifTea Counter").foreground(.yellow).bolded()
             Text("Count: \(model.count)").foreground(.green)
@@ -41,4 +42,3 @@ struct Main {
         SwifTea.brew(CounterApp(), fps: 30)
     }
 }
-
