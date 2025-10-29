@@ -3,24 +3,25 @@ import SwifTeaCore
 public struct TextField: TUIView {
     private let placeholder: String
     private let text: Binding<String>
-    private let isFocused: Bool
+    private let focus: Binding<Bool>?
     private let cursorSymbol: String
 
     public init(
         _ placeholder: String = "",
         text: Binding<String>,
-        isFocused: Bool = true,
+        focus: Binding<Bool>? = nil,
         cursor: String = "|"
     ) {
         self.placeholder = placeholder
         self.text = text
-        self.isFocused = isFocused
+        self.focus = focus
         self.cursorSymbol = cursor
     }
 
     public func render() -> String {
         let value = text.wrappedValue
         let body = value.isEmpty ? placeholder : value
+        let isFocused = focus?.wrappedValue ?? true
         guard isFocused else { return body }
         return body + cursorSymbol
     }
