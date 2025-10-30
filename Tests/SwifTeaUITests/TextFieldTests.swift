@@ -110,4 +110,37 @@ struct TextFieldTests {
         harness.$field.moveBackward(in: ring)
         #expect(harness.field == .controls)
     }
+
+    @Test("Focus scope stops at boundaries when wrapping disabled")
+    func testFocusScopeBoundaries() {
+        struct FocusHarness {
+            enum Field: Hashable { case controls, title, body }
+            @FocusState var field: Field?
+        }
+
+        var harness = FocusHarness()
+        harness.field = .title
+
+        let scope = FocusScope<FocusHarness.Field>(
+            [.title, .body],
+            forwardWraps: false,
+            backwardWraps: false
+        )
+
+        let firstAdvanceHandled = harness.$field.moveForward(in: scope)
+        #expect(firstAdvanceHandled)
+        #expect(harness.field == .body)
+
+        let secondAdvanceHandled = harness.$field.moveForward(in: scope)
+        #expect(!secondAdvanceHandled)
+        #expect(harness.field == .body)
+
+        let backwardHandled = harness.$field.moveBackward(in: scope)
+        #expect(backwardHandled)
+        #expect(harness.field == .title)
+
+        let exitHandled = harness.$field.moveBackward(in: scope)
+        #expect(!exitHandled)
+        #expect(harness.field == .title)
+    }
 }
