@@ -48,6 +48,13 @@ let package = Package(
                 "SwifTeaUI",
                 .product(name:"Testing", package: "swift-testing")
             ]
+        ),
+        .testTarget(
+            name: "SwifTeaNotebookExampleTests",
+            dependencies: [
+                "SwifTeaNotebookExample",
+                .product(name: "Testing", package: "swift-testing")
+            ]
         )
     ],
 )
