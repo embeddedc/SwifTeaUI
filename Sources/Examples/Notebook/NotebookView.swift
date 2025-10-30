@@ -1,0 +1,51 @@
+import SwifTeaCore
+import SwifTeaUI
+
+struct NotebookView: TUIView {
+    let state: NotebookState
+    let focus: NotebookFocusField?
+    let titleBinding: Binding<String>
+    let bodyBinding: Binding<String>
+    let titleFocusBinding: Binding<Bool>
+    let bodyFocusBinding: Binding<Bool>
+
+    func render() -> String {
+        let sidebarLines = state.notes.enumerated().map { index, note -> String in
+            let pointer = (index == state.selectedIndex) ? ">" : " "
+            let focusMarker = (focus == .sidebar && index == state.selectedIndex) ? "▌" : " "
+            return "\(pointer)\(focusMarker) \(note.title)"
+        }
+        let sidebarBlock = sidebarLines.joined(separator: "\n")
+
+        return VStack {
+            Text("SwifTea Notebook").foreground(.yellow).bolded()
+            Text("[Tab] next focus | [Shift+Tab] previous | [↑/↓] choose note | [Enter] save body").foreground(.cyan)
+            Text("")
+            Text("Notes").foreground(.yellow)
+            Text(sidebarBlock).foreground(.green)
+            Text("")
+            Text("Editor").foreground(.yellow)
+            Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
+            TextField("Title...", text: titleBinding, focus: titleFocusBinding)
+            Text("Body:").foreground(focus == .editorBody ? .cyan : .yellow)
+            TextField("Body...", text: bodyBinding, focus: bodyFocusBinding)
+            Text("")
+            Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
+            Text("Status: \(state.statusMessage)").foreground(.cyan)
+            Text("Focus: \(focusDescription)").foreground(.yellow)
+        }.render()
+    }
+
+    private var focusDescription: String {
+        switch focus {
+        case .sidebar:
+            return "sidebar"
+        case .editorTitle:
+            return "editor.title"
+        case .editorBody:
+            return "editor.body"
+        case .none:
+            return "none"
+        }
+    }
+}
