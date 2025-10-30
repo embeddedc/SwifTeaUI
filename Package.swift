@@ -8,7 +8,8 @@ let package = Package(
         // Users typically `import SwifTeaUI` (which depends on SwifTeaCore)
         .library(name: "SwifTeaUI", targets: ["SwifTeaUI"]),
         .library(name: "SwifTeaCore", targets: ["SwifTeaCore"]),
-        .executable(name: "SwifTeaCounterExample", targets: ["SwifTeaCounterExample"])
+        .executable(name: "SwifTeaCounterExample", targets: ["SwifTeaCounterExample"]),
+        .executable(name: "SwifTeaNotebookExample", targets: ["SwifTeaNotebookExample"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-testing.git", branch: "main")
@@ -28,6 +29,11 @@ let package = Package(
             dependencies: ["SwifTeaUI"],
             path: "Sources/Examples/Counter"
         ),
+        .executableTarget(
+            name: "SwifTeaNotebookExample",
+            dependencies: ["SwifTeaUI"],
+            path: "Sources/Examples/Notebook"
+        ),
         .testTarget(
             name: "SwifTeaCoreTests",
             dependencies: [
@@ -45,4 +51,3 @@ let package = Package(
         )
     ],
 )
-
