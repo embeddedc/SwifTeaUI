@@ -3,7 +3,27 @@ import Foundation
 // MARK: - Core UI protocols
 
 public protocol TUIView {
+    associatedtype Body: TUIView
+    var body: Body { get }
     func render() -> String
+}
+
+public extension TUIView {
+    func render() -> String {
+        body.render()
+    }
+}
+
+extension Never: TUIView {
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("Never has no body")
+    }
+
+    public func render() -> String {
+        fatalError("Never cannot render")
+    }
 }
 
 public protocol TUIApp {
@@ -72,4 +92,3 @@ public enum SwifTea {
         }
     }
 }
-

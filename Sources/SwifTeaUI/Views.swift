@@ -2,6 +2,12 @@ import Foundation
 import SwifTeaCore
 
 public struct Text: TUIView {
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("Text has no body")
+    }
+
     let content: String
     var color: ANSIColor? = nil
     var bold: Bool = false
@@ -37,7 +43,13 @@ public struct VStack: TUIView {
         case bottom
     }
 
-    let children: [TUIView]
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("VStack has no body")
+    }
+
+    let children: [any TUIView]
     let spacing: Int
     let alignment: Alignment
     let verticalAlignment: VerticalAlignment
@@ -48,7 +60,7 @@ public struct VStack: TUIView {
         alignment: Alignment = .leading,
         verticalAlignment: VerticalAlignment = .top,
         height: Int? = nil,
-        @TUIBuilder _ content: () -> [TUIView]
+        @TUIBuilder _ content: () -> [any TUIView]
     ) {
         self.children = content()
         self.spacing = max(0, spacing)
@@ -162,7 +174,13 @@ public struct HStack: TUIView {
         case bottom
     }
 
-    let children: [TUIView]
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("HStack has no body")
+    }
+
+    let children: [any TUIView]
     let spacing: Int
     let horizontalAlignment: HorizontalAlignment
     let verticalAlignment: VerticalAlignment
@@ -171,7 +189,7 @@ public struct HStack: TUIView {
         spacing: Int = 3,
         horizontalAlignment: HorizontalAlignment = .leading,
         verticalAlignment: VerticalAlignment = .top,
-        @TUIBuilder _ content: () -> [TUIView]
+        @TUIBuilder _ content: () -> [any TUIView]
     ) {
         self.children = content()
         self.spacing = max(0, spacing)
@@ -304,5 +322,5 @@ private extension Character {
 // SwiftUI-esque result builder
 @resultBuilder
 public struct TUIBuilder {
-    public static func buildBlock(_ components: TUIView...) -> [TUIView] { components }
+    public static func buildBlock(_ components: any TUIView...) -> [any TUIView] { components }
 }

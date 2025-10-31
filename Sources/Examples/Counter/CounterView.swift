@@ -1,7 +1,7 @@
 import SwifTeaCore
 import SwifTeaUI
 
-struct CounterView: DeclarativeTUIView {
+struct CounterView: TUIView {
     let state: CounterState
     let focus: CounterFocusField?
     let titleBinding: Binding<String>

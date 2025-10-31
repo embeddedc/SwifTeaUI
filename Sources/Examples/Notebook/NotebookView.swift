@@ -1,7 +1,7 @@
 import SwifTeaCore
 import SwifTeaUI
 
-struct NotebookView: DeclarativeTUIView {
+struct NotebookView: TUIView {
     let state: NotebookState
     let focus: NotebookFocusField?
     let titleBinding: Binding<String>

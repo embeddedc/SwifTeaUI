@@ -1,6 +1,12 @@
 import SwifTeaCore
 
 public struct TextField: TUIView {
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("TextField has no body")
+    }
+
     private let placeholder: String
     private let text: Binding<String>
     private let focus: Binding<Bool>?
