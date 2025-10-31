@@ -115,24 +115,33 @@ public struct VStack: TUIView {
 
 
 public struct HStack: TUIView {
-    public enum Alignment {
+    public enum HorizontalAlignment {
         case leading
         case center
         case trailing
     }
 
+    public enum VerticalAlignment {
+        case top
+        case center
+        case bottom
+    }
+
     let children: [TUIView]
     let spacing: Int
-    let alignment: Alignment
+    let horizontalAlignment: HorizontalAlignment
+    let verticalAlignment: VerticalAlignment
 
     public init(
         spacing: Int = 3,
-        alignment: Alignment = .leading,
+        horizontalAlignment: HorizontalAlignment = .leading,
+        verticalAlignment: VerticalAlignment = .top,
         @TUIBuilder _ content: () -> [TUIView]
     ) {
         self.children = content()
         self.spacing = max(0, spacing)
-        self.alignment = alignment
+        self.horizontalAlignment = horizontalAlignment
+        self.verticalAlignment = verticalAlignment
     }
 
     public func render() -> String {
@@ -140,8 +149,21 @@ public struct HStack: TUIView {
 
         let renderedColumns = children.map { $0.render().splitLinesPreservingEmpty() }
         let columnWidths = renderedColumns.map { $0.map(Self.visibleWidth(of:)).max() ?? 0 }
-        let maxRows = renderedColumns.map(\.count).max() ?? 0
+        let columnHeights = renderedColumns.map(\.count)
+        let maxRows = columnHeights.max() ?? 0
         let spacingString = String(repeating: " ", count: spacing)
+
+        let verticalOffsets = columnHeights.map { height -> Int in
+            guard height < maxRows else { return 0 }
+            switch verticalAlignment {
+            case .top:
+                return 0
+            case .center:
+                return (maxRows - height) / 2
+            case .bottom:
+                return maxRows - height
+            }
+        }
 
         var rows: [String] = []
         rows.reserveCapacity(maxRows)
@@ -151,11 +173,12 @@ public struct HStack: TUIView {
             pieces.reserveCapacity(children.count)
 
             for (index, lines) in renderedColumns.enumerated() {
-                let line = row < lines.count ? lines[row] : ""
+                let offsetRow = row - verticalOffsets[index]
+                let line = (offsetRow >= 0 && offsetRow < lines.count) ? lines[offsetRow] : ""
                 let padded = Self.pad(
                     line,
                     toVisibleWidth: columnWidths[index],
-                    alignment: alignment
+                    alignment: horizontalAlignment
                 )
                 pieces.append(padded)
             }
@@ -193,7 +216,7 @@ public struct HStack: TUIView {
     private static func pad(
         _ line: String,
         toVisibleWidth width: Int,
-        alignment: Alignment
+        alignment: HorizontalAlignment
     ) -> String {
         let currentWidth = visibleWidth(of: line)
         guard currentWidth < width else { return line }
