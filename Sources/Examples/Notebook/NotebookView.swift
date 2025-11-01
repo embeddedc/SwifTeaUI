@@ -26,12 +26,13 @@ struct NotebookView: TUIView {
         }
         let sidebarBlock = sidebarLines.joined(separator: "\n")
 
-        let sidebar = VStack(alignment: .leading) {
+        let sidebarContent = VStack(alignment: .leading) {
             Text("Notes").foreground(.yellow)
             Text(sidebarBlock)
         }
+        let sidebar = Border(sidebarContent)
 
-        let editor = VStack(spacing: 1, alignment: .leading) {
+        let editorContent = VStack(spacing: 1, alignment: .leading) {
             Text("Editor").foreground(.yellow)
             Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
             TextField("Title...", text: titleBinding, focus: titleFocusBinding)
@@ -41,6 +42,7 @@ struct NotebookView: TUIView {
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
             Text("Status: \(state.statusMessage)").foreground(.cyan)
         }
+        let editor = Border(editorContent)
 
         return VStack(spacing: 1, alignment: .leading) {
             Text("SwifTea Notebook").foreground(.yellow).bolded()

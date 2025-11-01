@@ -70,17 +70,29 @@ public enum SwifTea {
 
         let originalMode = setRawMode()
         hideCursor()
+        let frameLogger = FrameLogger.make()
         defer {
             showCursor()
             restoreMode(originalMode)
         }
+        clearScreenAndHome()
         var running = true
+        var lastFrame: String? = nil
+        var staticFrameStreak = 0
+        let maxStaticFrames = 5
         while running {
             // Render
             let frame = app.view(model: app.model).render()
-            clearScreenAndHome()
-            print(frame)
-            fflush(stdout)
+            let changed = frame != lastFrame
+            let forceRefresh = !changed ? (staticFrameStreak >= maxStaticFrames) : false
+            frameLogger?.log(frame, changed: changed, forced: forceRefresh)
+            if changed || forceRefresh {
+                renderFrame(frame)
+                lastFrame = frame
+                staticFrameStreak = 0
+            } else {
+                staticFrameStreak += 1
+            }
 
             // Input → Action
             if let ke = readKeyEvent(), let action = app.mapKeyToAction(ke) {
@@ -96,4 +108,75 @@ public enum SwifTea {
             usleep(frameDelay)
         }
     }
+}
+
+private final class FrameLogger {
+    private let handle: FileHandle
+    private var frameIndex: Int = 0
+
+    private init?(path: String) {
+        let manager = FileManager.default
+        if manager.fileExists(atPath: path) {
+            try? manager.removeItem(atPath: path)
+        }
+
+        manager.createFile(atPath: path, contents: nil, attributes: nil)
+
+        guard let handle = FileHandle(forWritingAtPath: path) else {
+            return nil
+        }
+
+        self.handle = handle
+    }
+
+    deinit {
+        try? handle.close()
+    }
+
+    static func make() -> FrameLogger? {
+        guard let path = ProcessInfo.processInfo.environment["SWIFTEA_FRAME_LOG"],
+              !path.isEmpty else { return nil }
+        return FrameLogger(path: path)
+    }
+
+    func log(_ frame: String, changed: Bool, forced: Bool) {
+        frameIndex += 1
+        let header = "\n--- frame \(frameIndex) (changed: \(changed) forced: \(forced)) ---\n"
+        guard let headerData = header.data(using: .utf8),
+              let frameData = frame.data(using: .utf8),
+              let newline = "\n".data(using: .utf8) else { return }
+
+        do {
+            try handle.seekToEnd()
+            try handle.write(contentsOf: headerData)
+            try handle.write(contentsOf: frameData)
+            try handle.write(contentsOf: newline)
+        } catch {
+            // Best-effort logging; ignore write failures.
+        }
+    }
+}
+
+@inline(__always)
+private func moveCursorHome() {
+    writeToStdout("\u{001B}[H")
+}
+
+@inline(__always)
+private func clearBelowCursor() {
+    writeToStdout("\u{001B}[J")
+}
+
+@inline(__always)
+private func renderFrame(_ frame: String) {
+    moveCursorHome()
+    writeToStdout(frame)
+    clearBelowCursor()
+    fflush(stdout)
+}
+
+@inline(__always)
+private func writeToStdout(_ string: String) {
+    guard !string.isEmpty, let data = string.data(using: .utf8) else { return }
+    try? FileHandle.standardOutput.write(contentsOf: data)
 }

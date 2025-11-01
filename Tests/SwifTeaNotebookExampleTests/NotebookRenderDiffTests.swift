@@ -1,0 +1,25 @@
+import Testing
+@testable import SwifTeaNotebookExample
+
+struct NotebookRenderDiffTests {
+
+    @Test("Notebook adjacent renders only differ when state changes")
+    func testFrameDiffs() {
+        var app = NotebookApp()
+        let frame1 = renderNotebook(app)
+        let frame2 = renderNotebook(app)
+        #expect(frame1 == frame2)
+
+        app.update(action: .selectNext)
+        let frame3 = renderNotebook(app)
+        #expect(frame2 != frame3)
+
+        let frame4 = renderNotebook(app)
+        #expect(frame3 == frame4)
+    }
+
+    private func renderNotebook(_ app: NotebookApp) -> String {
+        let view = app.view(model: app)
+        return view.render()
+    }
+}
