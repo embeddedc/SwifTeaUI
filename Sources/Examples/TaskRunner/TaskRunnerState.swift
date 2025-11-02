@@ -18,7 +18,8 @@ struct TaskRunnerState {
     var steps: [Step] = [
         Step(title: "Fetch configuration", status: .pending),
         Step(title: "Run analysis", status: .pending),
-        Step(title: "Write summary", status: .pending)
+        Step(title: "Write summary", status: .pending),
+        Step(title: "Publish artifacts", status: .pending)
     ]
 }
 

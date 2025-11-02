@@ -28,7 +28,7 @@ struct TaskRunnerSnapshotTests {
             .strippingANSI()
             .removingTrailingSpacesPerLine()
 
-        #expect(processed.contains("- Step 1/3 (ASCII)"))
+        #expect(processed.contains("- Step 1/4 (ASCII)"))
         #expect(processed.contains("running (ASCII)"))
         #expect(
             processed.splitLinesPreservingEmpty()
@@ -48,6 +48,7 @@ private enum TaskRunnerSnapshotFixtures {
  │ •  1. Fetch configuration pending                                          │
  │ •  2. Run analysis pending                                                 │
  │ •  3. Write summary pending                                                │
+ │ •  4. Publish artifacts pending                                            │
  └────────────────────────────────────────────────────────────────────────────┘
 
  Task Runner Press Enter to start  [Enter] advance [f] fail [r] reset [q] quit
@@ -64,9 +65,10 @@ private enum TaskRunnerSnapshotFixtures {
  │ -  1. Fetch configuration running (ASCII)                                  │
  │ •  2. Run analysis pending                                                 │
  │ •  3. Write summary pending                                                │
+ │ •  4. Publish artifacts pending                                            │
  └────────────────────────────────────────────────────────────────────────────┘
 
- Task Runner - Step 1/3 (ASCII)  [Enter] advance [f] fail [r] reset [q] quit
+ Task Runner - Step 1/4 (ASCII)  [Enter] advance [f] fail [r] reset [q] quit
 
 """
 }
