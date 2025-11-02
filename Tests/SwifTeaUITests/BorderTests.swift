@@ -1,4 +1,5 @@
 import Testing
+@testable import SwifTeaCore
 @testable import SwifTeaUI
 
 struct BorderTests {
@@ -28,5 +29,18 @@ struct BorderTests {
         let view = Text("Hi").border(padding: 0)
         let expected = Border(padding: 0, Text("Hi")).render()
         #expect(view.render() == expected)
+    }
+
+    @Test("Border focus styling colors only the border characters")
+    func testBorderFocusStyling() {
+        let border = Border(padding: 0, color: .cyan, bold: true, Text("Hi"))
+        let lines = border.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let prefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+
+        #expect(lines.count == 3)
+        #expect(lines[0] == prefix + "┌──┐" + reset)
+        #expect(lines[1] == prefix + "│" + reset + "Hi" + prefix + "│" + reset)
+        #expect(lines[2] == prefix + "└──┘" + reset)
     }
 }

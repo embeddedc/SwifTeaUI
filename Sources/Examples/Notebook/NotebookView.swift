@@ -31,6 +31,9 @@ struct NotebookView: TUIView {
         let mode = layoutMode(for: size)
         let editorWidth = preferredEditorWidth(for: size, mode: mode)
 
+        let focusStyle = FocusStyle.default
+        let editorIsFocused = focus == .editorTitle || focus == .editorBody
+
         let editorContent = VStack(spacing: 1, alignment: .leading) {
             editorTitleView
             Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
@@ -41,7 +44,12 @@ struct NotebookView: TUIView {
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
             Text("Status: \(state.statusMessage)").foreground(.cyan)
         }
-        let editor = Border(editorContent)
+        let editor = Border(
+            padding: 1,
+            color: editorIsFocused ? focusStyle.color : nil,
+            bold: editorIsFocused ? focusStyle.bold : false,
+            editorContent
+        )
 
         let sidebar = Sidebar(
             title: "Notes",

@@ -9,15 +9,23 @@ public struct Border<Content: TUIView>: TUIView {
 
     private let content: Content
     private let padding: Int
+    private let borderColor: ANSIColor?
+    private let borderBold: Bool
 
     public init(_ content: Content) {
-        self.init(padding: 1, content)
+        self.init(padding: 1, color: nil, bold: false, content)
     }
 
     public init(padding: Int, _ content: Content) {
+        self.init(padding: padding, color: nil, bold: false, content)
+    }
+
+    public init(padding: Int, color: ANSIColor? = nil, bold: Bool = false, _ content: Content) {
         precondition(padding >= 0, "Border padding must be non-negative.")
         self.content = content
         self.padding = padding
+        self.borderColor = color
+        self.borderBold = bold
     }
 
     public func render() -> String {
@@ -26,15 +34,34 @@ public struct Border<Content: TUIView>: TUIView {
         let width = lines.map { Self.visibleWidth(of: $0) }.max() ?? 0
         let paddingString = String(repeating: " ", count: padding)
         let horizontal = String(repeating: "─", count: width + padding * 2)
-        let top = "┌" + horizontal + "┐"
-        let bottom = "└" + horizontal + "┘"
+        let top = decorateHorizontal("┌" + horizontal + "┐")
+        let bottom = decorateHorizontal("└" + horizontal + "┘")
+
+        let leftBorder = decorateVertical("│")
+        let rightBorder = decorateVertical("│")
 
         let body = lines.map { line -> String in
             let padded = Self.pad(line, toVisibleWidth: width)
-            return "│" + paddingString + padded + paddingString + "│"
+            return leftBorder + paddingString + padded + paddingString + rightBorder
         }
 
         return ([top] + body + [bottom]).joined(separator: "\n")
+    }
+
+    private func decorateHorizontal(_ line: String) -> String {
+        guard let style = borderStyle else { return line }
+        return style.prefix + line + style.suffix
+    }
+
+    private func decorateVertical(_ character: String) -> String {
+        guard let style = borderStyle else { return character }
+        return style.prefix + character + style.suffix
+    }
+
+    private var borderStyle: (prefix: String, suffix: String)? {
+        guard borderColor != nil || borderBold else { return nil }
+        let prefix = (borderColor?.rawValue ?? "") + (borderBold ? "\u{001B}[1m" : "")
+        return (prefix, ANSIColor.reset.rawValue)
     }
 
     private static func visibleWidth(of string: String) -> Int {
@@ -66,8 +93,8 @@ public struct Border<Content: TUIView>: TUIView {
 }
 
 public extension TUIView {
-    func border(padding: Int = 1) -> some TUIView {
-        Border(padding: padding, self)
+    func border(padding: Int = 1, color: ANSIColor? = nil, bold: Bool = false) -> some TUIView {
+        Border(padding: padding, color: color, bold: bold, self)
     }
 }
 

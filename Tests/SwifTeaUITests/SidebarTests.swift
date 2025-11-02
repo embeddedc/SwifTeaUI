@@ -49,6 +49,7 @@ struct SidebarTests {
 """
         #expect(rendered.strippingANSI() == expected)
         #expect(!rendered.contains("\u{001B}[1m"))
+        #expect(!rendered.contains(ANSIColor.cyan.rawValue + "\u{001B}[1m┌"))
     }
 
     @Test("Sidebar highlights selection when focused")
@@ -71,5 +72,9 @@ struct SidebarTests {
         let stripped = rendered.strippingANSI()
         #expect(stripped == expected)
         #expect(rendered.contains("\u{001B}[1m"))
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        #expect(rendered.contains(focusPrefix + "┌────────┐" + reset))
+        #expect(rendered.contains(focusPrefix + "│" + reset))
     }
 }

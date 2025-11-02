@@ -8,18 +8,34 @@ struct NotebookSnapshotTests {
 
     @Test("Initial layout renders expected snapshot")
     func testInitialLayoutSnapshot() {
-        assertSnapshot(
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        let sidebarTop = focusPrefix + "┌────────────────────────────────┐"
+        let editorTop = focusPrefix + "┌──────────────────────────────────────────────────────────────────────────────────┐"
+
+        let snapshot = assertSnapshot(
             contains: ANSIColor.cyan.rawValue + ">▌ Welcome to SwifTeaUI" + ANSIColor.reset.rawValue,
+            containsAll: [sidebarTop],
             expected: NotebookSnapshotFixtures.initial
         )
+        #expect(snapshot.contains(focusPrefix + "│" + reset))
+        #expect(!snapshot.contains(editorTop))
     }
 
     @Test("Notebook stacks panes when width constrained")
     func testStackedLayoutSnapshot() {
-        assertSnapshot(
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        let sidebarTop = focusPrefix + "┌────────────────────────────────┐"
+        let editorTop = focusPrefix + "┌──────────────────────────────────────────────────────────────────────────────────┐"
+
+        let snapshot = assertSnapshot(
+            containsAll: [sidebarTop],
             expected: NotebookSnapshotFixtures.stacked,
             size: TerminalSize(columns: 110, rows: 40)
         )
+        #expect(snapshot.contains(focusPrefix + "│" + reset))
+        #expect(!snapshot.contains(editorTop))
     }
 
     @Test("Notebook renders resize prompt when terminal too small")
@@ -32,29 +48,53 @@ struct NotebookSnapshotTests {
 
     @Test("Title field focus snapshot shows cursor in title")
     func testTitleFieldFocusSnapshot() {
-        assertSnapshot(
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        let sidebarTop = focusPrefix + "┌────────────────────────────────┐"
+        let editorTop = focusPrefix + "┌──────────────────────────────────────────────────────────────────────────────────┐"
+
+        let snapshot = assertSnapshot(
             mutate: { $0.update(action: .setFocus(.editorTitle)) },
             contains: ANSIColor.cyan.rawValue + "Title:" + ANSIColor.reset.rawValue,
+            containsAll: [editorTop],
             expected: NotebookSnapshotFixtures.titleFocus
         )
+        #expect(snapshot.contains(focusPrefix + "│" + reset))
+        #expect(!snapshot.contains(sidebarTop))
     }
 
     @Test("Body field focus snapshot shows cursor in body")
     func testBodyFieldFocusSnapshot() {
-        assertSnapshot(
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        let sidebarTop = focusPrefix + "┌────────────────────────────────┐"
+        let editorTop = focusPrefix + "┌──────────────────────────────────────────────────────────────────────────────────┐"
+
+        let snapshot = assertSnapshot(
             mutate: { $0.update(action: .setFocus(.editorBody)) },
             contains: ANSIColor.cyan.rawValue + "Body:" + ANSIColor.reset.rawValue,
+            containsAll: [editorTop],
             expected: NotebookSnapshotFixtures.bodyFocus
         )
+        #expect(snapshot.contains(focusPrefix + "│" + reset))
+        #expect(!snapshot.contains(sidebarTop))
     }
 
     @Test("Sidebar selection snapshot highlights second note")
     func testSidebarSelectionSnapshot() {
-        assertSnapshot(
+        let focusPrefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
+        let reset = ANSIColor.reset.rawValue
+        let sidebarTop = focusPrefix + "┌────────────────────────────────┐"
+        let editorTop = focusPrefix + "┌──────────────────────────────────────────────────────────────────────────────────┐"
+
+        let snapshot = assertSnapshot(
             mutate: { $0.update(action: .selectNext) },
             contains: ANSIColor.cyan.rawValue + ">▌ Keyboard Shortcuts Overview" + ANSIColor.reset.rawValue,
+            containsAll: [sidebarTop],
             expected: NotebookSnapshotFixtures.secondNote
         )
+        #expect(snapshot.contains(focusPrefix + "│" + reset))
+        #expect(!snapshot.contains(editorTop))
     }
 
     @Test("Notebook frame output stays stable across consecutive renders and selection changes")
@@ -146,12 +186,14 @@ private extension Character {
     }
 }
 
+@discardableResult
 private func assertSnapshot(
     mutate: (inout NotebookApp) -> Void = { _ in },
     contains substring: String? = nil,
+    containsAll substrings: [String] = [],
     expected expectedSnapshot: String,
     size overrideSize: TerminalSize? = nil
-) {
+) -> String {
     var app = NotebookApp()
     mutate(&app)
 
@@ -162,6 +204,9 @@ private func assertSnapshot(
     if let substring {
         #expect(snapshot.contains(substring))
     }
+    for requirement in substrings {
+        #expect(snapshot.contains(requirement))
+    }
 
     let processed = snapshot
         .strippingANSI()
@@ -171,6 +216,7 @@ private func assertSnapshot(
         .removingTrailingSpacesPerLine()
 
     #expect(processed == expectedProcessed)
+    return snapshot
 }
 
 private enum NotebookSnapshotFixtures {
