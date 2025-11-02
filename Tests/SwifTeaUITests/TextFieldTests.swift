@@ -35,6 +35,17 @@ struct TextFieldTests {
         var binding: Binding<String> { $value }
     }
 
+    @Test("Custom focus style overrides default styling")
+    func testCustomFocusStyle() {
+        let harness = Harness()
+        let binding = harness.binding
+        let customStyle = FocusStyle(indicator: "*", color: .green, bold: false)
+        let field = TextField("Prompt", text: binding, cursor: "|", focusStyle: customStyle)
+
+        #expect(field.render().contains("*"))
+        #expect(field.render().contains(ANSIColor.green.rawValue))
+    }
+
     @Test("Text input binding supports character insertion and backspace")
     func testApplyEdits() {
         let harness = Harness()

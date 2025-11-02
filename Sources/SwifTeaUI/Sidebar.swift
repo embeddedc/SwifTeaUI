@@ -28,7 +28,7 @@ public struct Sidebar<Item>: TUIView {
             focusIndicator: String = "▌",
             unfocusedIndicator: String = " ",
             borderPadding: Int = 1,
-            focusStyle: FocusStyle = FocusStyle(indicator: "", color: .cyan, bold: true)
+            focusStyle: FocusStyle = .default
         ) {
             self.titleColor = titleColor
             self.selectedColor = selectedColor
@@ -82,8 +82,16 @@ public struct Sidebar<Item>: TUIView {
 
         let listBlock = coloredLines.joined(separator: "\n")
 
+        let titleView: Text = {
+            if isFocused {
+                return Text(style.focusStyle.apply(to: title))
+            } else {
+                return Text(title).foreground(style.titleColor)
+            }
+        }()
+
         let content = VStack(alignment: .leading) {
-            Text(title).foreground(style.titleColor)
+            titleView
             Text(listBlock)
         }
 

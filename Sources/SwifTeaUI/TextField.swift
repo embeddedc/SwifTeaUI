@@ -11,17 +11,20 @@ public struct TextField: TUIView {
     private let text: Binding<String>
     private let focus: Binding<Bool>?
     private let cursorSymbol: String
+    private let focusStyle: FocusStyle
 
     public init(
         _ placeholder: String = "",
         text: Binding<String>,
         focus: Binding<Bool>? = nil,
-        cursor: String = "|"
+        cursor: String = "|",
+        focusStyle: FocusStyle = .default
     ) {
         self.placeholder = placeholder
         self.text = text
         self.focus = focus
         self.cursorSymbol = cursor
+        self.focusStyle = focusStyle
     }
 
     public func render() -> String {
@@ -29,8 +32,19 @@ public struct TextField: TUIView {
         let body = value.isEmpty ? placeholder : value
         let isFocused = focus?.wrappedValue ?? true
         guard isFocused else { return body }
-        let style = FocusStyle(indicator: "", color: .cyan, bold: true)
-        return style.apply(to: body + cursorSymbol)
+        return focusStyle.apply(to: body + cursorSymbol)
+    }
+
+    public func focusStyle(_ style: FocusStyle) -> TextField {
+        var copy = self
+        copy = TextField(
+            placeholder,
+            text: text,
+            focus: focus,
+            cursor: cursorSymbol,
+            focusStyle: style
+        )
+        return copy
     }
 }
 

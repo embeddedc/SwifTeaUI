@@ -12,19 +12,22 @@ public struct TextArea: TUIView {
     private let focus: Binding<Bool>?
     private let cursorSymbol: String
     private let wrapWidth: Int
+    private let focusStyle: FocusStyle
 
     public init(
         _ placeholder: String = "",
         text: Binding<String>,
         focus: Binding<Bool>? = nil,
         width: Int = 60,
-        cursor: String = "|"
+        cursor: String = "|",
+        focusStyle: FocusStyle = .default
     ) {
         self.placeholder = placeholder
         self.text = text
         self.focus = focus
         self.cursorSymbol = cursor
         self.wrapWidth = max(1, width)
+        self.focusStyle = focusStyle
     }
 
     public func render() -> String {
@@ -39,8 +42,7 @@ public struct TextArea: TUIView {
             } else {
                 lines[lines.count - 1] += cursorSymbol
             }
-            let style = FocusStyle(indicator: "", color: .cyan, bold: true)
-            lines[lines.count - 1] = style.apply(to: lines.last ?? "")
+            lines[lines.count - 1] = focusStyle.apply(to: lines.last ?? "")
         }
 
         return lines.joined(separator: "\n")
@@ -112,5 +114,16 @@ public struct TextArea: TUIView {
         }
 
         return lines.isEmpty ? [""] : lines
+    }
+
+    public func focusStyle(_ style: FocusStyle) -> TextArea {
+        TextArea(
+            placeholder,
+            text: text,
+            focus: focus,
+            width: wrapWidth,
+            cursor: cursorSymbol,
+            focusStyle: style
+        )
     }
 }

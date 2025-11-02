@@ -32,7 +32,7 @@ struct NotebookView: TUIView {
         let editorWidth = preferredEditorWidth(for: size, mode: mode)
 
         let editorContent = VStack(spacing: 1, alignment: .leading) {
-            Text("Editor").foreground(.yellow)
+            editorTitleView
             Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
             TextField("Title...", text: titleBinding, focus: titleFocusBinding)
             Text("Body:").foreground(focus == .editorBody ? .cyan : .yellow)
@@ -47,7 +47,8 @@ struct NotebookView: TUIView {
             title: "Notes",
             items: state.notes,
             selection: state.selectedIndex,
-            isFocused: focus == .sidebar
+            isFocused: focus == .sidebar,
+            style: sidebarStyle
         ) { note in
             note.title
         }
@@ -114,12 +115,7 @@ struct NotebookView: TUIView {
             leading: [
                 .init("Focus: \(focusDescription)", color: .yellow)
             ],
-            trailing: [
-                .init("Tab next", color: .cyan),
-                .init("Shift+Tab prev", color: .cyan),
-                .init("↑/↓ choose note", color: .cyan),
-                .init("Enter save", color: .cyan)
-            ]
+            trailing: statusSegments
         )
     }
 
@@ -134,6 +130,50 @@ struct NotebookView: TUIView {
         case .stacked:
             let maxWidth = max(min(size.columns - 8, 70), 40)
             return maxWidth
+        }
+    }
+
+    private var sidebarStyle: Sidebar<NotebookState.Note>.Style {
+        var style = Sidebar<NotebookState.Note>.Style()
+        if focus == .sidebar {
+            style.titleColor = .cyan
+        }
+        return style
+    }
+
+    private var editorTitleView: some TUIView {
+        if focus == .editorTitle || focus == .editorBody {
+            return Text(FocusStyle.default.apply(to: "Editor"))
+        } else {
+            return Text("Editor").foreground(.yellow)
+        }
+    }
+
+    private var statusSegments: [StatusBar.Segment] {
+        switch focus {
+        case .sidebar:
+            return [
+                .init("Enter edit", color: .cyan),
+                .init("↑/↓ choose", color: .cyan),
+                .init("Tab editor", color: .cyan)
+            ]
+        case .editorTitle:
+            return [
+                .init("Enter save", color: .cyan),
+                .init("Tab body", color: .cyan),
+                .init("Esc sidebar", color: .cyan)
+            ]
+        case .editorBody:
+            return [
+                .init("Enter save", color: .cyan),
+                .init("Shift+Tab title", color: .cyan),
+                .init("Esc sidebar", color: .cyan)
+            ]
+        case .none:
+            return [
+                .init("Tab next", color: .cyan),
+                .init("Shift+Tab prev", color: .cyan)
+            ]
         }
     }
 }

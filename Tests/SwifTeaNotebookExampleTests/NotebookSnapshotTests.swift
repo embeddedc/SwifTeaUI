@@ -201,7 +201,7 @@ SwifTea Notebook
 
 
 
-Focus: sidebar  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
+Focus: sidebar  Enter edit  ↑/↓ choose  Tab editor
 """
 
     static let titleFocus = """
@@ -231,7 +231,7 @@ SwifTea Notebook
 
 
 
-Focus: editor.title  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
+Focus: editor.title  Enter save  Tab body  Esc sidebar
 """
 
     static let bodyFocus = """
@@ -261,7 +261,7 @@ SwifTea Notebook
 
 
 
-Focus: editor.body  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
+Focus: editor.body  Enter save  Shift+Tab title  Esc sidebar
 """
 
     static let secondNote = """
@@ -291,7 +291,7 @@ SwifTea Notebook
 
 
 
-Focus: sidebar  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
+Focus: sidebar  Enter edit  ↑/↓ choose  Tab editor
 """
 
     static let resizePrompt = """
@@ -346,6 +346,6 @@ SwifTea Notebook
 
 
 
-Focus: sidebar  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
+Focus: sidebar  Enter edit  ↑/↓ choose  Tab editor
 """
 }

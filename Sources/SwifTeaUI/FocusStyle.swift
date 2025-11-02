@@ -15,7 +15,7 @@ public struct FocusStyle {
         self.bold = bold
     }
 
-    public static let `default` = FocusStyle()
+    public static let `default` = FocusStyle(indicator: "", color: .cyan, bold: true)
 
     public func apply(to string: String) -> String {
         let styled: String
