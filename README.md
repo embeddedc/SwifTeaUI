@@ -77,3 +77,5 @@ Written in Swift.
 ### Feedback Widgets
 
 - `Spinner` renders an animated activity indicator that follows the runtime clock—use it inline with other views or embed its output inside components like `StatusBar` when background work is in flight. Built-in styles include `.ascii`, `.braille`, `.dots`, and `.line`; prefer `.ascii` or `.dots` when targeting monochrome terminals so glyphs stay legible without color cues.
+- `ProgressMeter` draws lightweight `[########----] 75%` bars sized for status strips, making it easy to surface coarse task progress without leaving the status area.
+- TaskRunner demonstrates a tiny status message queue so transient updates (step started/completed) cycle through the status bar instead of scrolling the primary layout—handy for longer running Swiftly workflows.

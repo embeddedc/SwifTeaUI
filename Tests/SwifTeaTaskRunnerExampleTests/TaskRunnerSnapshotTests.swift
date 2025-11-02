@@ -30,10 +30,26 @@ struct TaskRunnerSnapshotTests {
 
         #expect(processed.contains("- Step 1/4 (ASCII)"))
         #expect(processed.contains("running (ASCII)"))
+        #expect(processed.contains("• Started Fetch configuration"))
         #expect(
             processed.splitLinesPreservingEmpty()
             == TaskRunnerSnapshotFixtures.running.splitLinesPreservingEmpty()
         )
+    }
+
+    @Test("Completing first step advances progress meter and displays toast message")
+    func testCompletionProgressAndToast() {
+        var app = TaskRunnerApp()
+        app.update(action: .advance)
+        app.update(action: .advance)
+
+        let snapshot = renderTaskRunner(app, time: 0)
+        let processed = snapshot
+            .strippingANSI()
+            .removingTrailingSpacesPerLine()
+
+        #expect(processed.contains("[####            ]  25%"))
+        #expect(processed.contains("• Completed Fetch configuration"))
     }
 }
 
@@ -51,7 +67,7 @@ private enum TaskRunnerSnapshotFixtures {
  │ •  4. Publish artifacts pending                                            │
  └────────────────────────────────────────────────────────────────────────────┘
 
- Task Runner Press Enter to start  [Enter] advance [f] fail [r] reset [q] quit
+ Task Runner Press Enter to start [                ]   0%  [Enter] advance [f] fail [r] reset [q] quit
 
 """
 
@@ -68,7 +84,7 @@ private enum TaskRunnerSnapshotFixtures {
  │ •  4. Publish artifacts pending                                            │
  └────────────────────────────────────────────────────────────────────────────┘
 
- Task Runner - Step 1/4 (ASCII)  [Enter] advance [f] fail [r] reset [q] quit
+ Task Runner - Step 1/4 (ASCII) [                ]   0%  [Enter] advance [f] fail [r] reset [q] quit • Started Fetch configuration
 
 """
 }

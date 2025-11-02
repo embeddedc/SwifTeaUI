@@ -15,6 +15,8 @@ struct TaskRunnerApp: TUIApp {
     var model: TaskRunnerApp { self }
 
     mutating func update(action: Action) {
+        state.tickToasts()
+
         switch action {
         case .advance:
             viewModel.advance(state: &state)

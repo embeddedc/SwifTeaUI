@@ -59,16 +59,30 @@ struct TaskRunnerView: TUIView {
             segments.append(.init("Press Enter to start", color: .cyan))
         }
 
+        let meter = ProgressMeter(
+            value: state.progressFraction,
+            width: 16,
+            fill: "#",
+            empty: " "
+        ).render()
+        segments.append(.init(meter))
+
         return segments
     }
 
     private var statusTrailingSegments: [StatusBar.Segment] {
-        [
+        var segments: [StatusBar.Segment] = [
             .init("[Enter] advance", color: .yellow),
             .init("[f] fail", color: .yellow),
             .init("[r] reset", color: .yellow),
             .init("[q] quit", color: .yellow)
         ]
+
+        if let toast = state.activeToast {
+            segments.append(.init("• \(toast.text)", color: toast.color))
+        }
+
+        return segments
     }
 
     private func renderSteps() -> String {
