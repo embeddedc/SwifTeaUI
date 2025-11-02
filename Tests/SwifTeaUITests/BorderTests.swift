@@ -31,9 +31,10 @@ struct BorderTests {
         #expect(view.render() == expected)
     }
 
-    @Test("Border focus styling colors only the border characters")
-    func testBorderFocusStyling() {
-        let border = Border(padding: 0, color: .cyan, bold: true, Text("Hi"))
+    @Test("Focus ring styling colors only the border characters")
+    func testFocusRingStyling() {
+        let style = FocusStyle(indicator: "> ", color: .cyan, bold: true)
+        let border = FocusRingBorder(padding: 0, isFocused: true, style: style, Text("Hi"))
         let lines = border.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         let prefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
         let reset = ANSIColor.reset.rawValue
@@ -42,5 +43,18 @@ struct BorderTests {
         #expect(lines[0] == prefix + "┌──┐" + reset)
         #expect(lines[1] == prefix + "│" + reset + "Hi" + prefix + "│" + reset)
         #expect(lines[2] == prefix + "└──┘" + reset)
+        #expect(!lines.joined(separator: "\n").contains("> "))
+    }
+
+    @Test("Focus ring skips styling when view is not focused")
+    func testFocusRingUnfocused() {
+        let style = FocusStyle(indicator: "", color: .cyan, bold: true)
+        let border = FocusRingBorder(padding: 0, isFocused: false, style: style, Text("Hi"))
+        let expected = """
+┌──┐
+│Hi│
+└──┘
+"""
+        #expect(border.render() == expected)
     }
 }

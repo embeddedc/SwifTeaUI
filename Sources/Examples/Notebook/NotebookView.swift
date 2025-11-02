@@ -44,10 +44,10 @@ struct NotebookView: TUIView {
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
             Text("Status: \(state.statusMessage)").foreground(.cyan)
         }
-        let editor = Border(
+        let editor = FocusRingBorder(
             padding: 1,
-            color: editorIsFocused ? focusStyle.color : nil,
-            bold: editorIsFocused ? focusStyle.bold : false,
+            isFocused: editorIsFocused,
+            style: focusStyle,
             editorContent
         )
 

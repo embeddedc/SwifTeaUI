@@ -95,14 +95,13 @@ public struct Sidebar<Item>: TUIView {
             Text(listBlock)
         }
 
-        let borderColor = isFocused ? style.focusStyle.color : nil
-        let borderBold = isFocused ? style.focusStyle.bold : false
-        return Border(
-            padding: style.borderPadding,
-            color: borderColor,
-            bold: borderBold,
-            content
-        ).render()
+        return content
+            .focusRing(
+                padding: style.borderPadding,
+                isFocused: isFocused,
+                style: style.focusStyle
+            )
+            .render()
     }
 
     private func color(forSelected selected: Bool, focused: Bool) -> ANSIColor {

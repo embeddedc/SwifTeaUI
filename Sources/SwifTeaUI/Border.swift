@@ -92,9 +92,51 @@ public struct Border<Content: TUIView>: TUIView {
     }
 }
 
+public struct FocusRingBorder<Content: TUIView>: TUIView {
+    public typealias Body = Never
+
+    public var body: Never {
+        fatalError("FocusRingBorder has no body")
+    }
+
+    private let content: Content
+    private let padding: Int
+    private let isFocused: Bool
+    private let style: FocusStyle
+
+    public init(
+        padding: Int = 1,
+        isFocused: Bool,
+        style: FocusStyle = .default,
+        _ content: Content
+    ) {
+        self.padding = padding
+        self.isFocused = isFocused
+        self.style = style
+        self.content = content
+    }
+
+    public func render() -> String {
+        Border(
+            padding: padding,
+            color: isFocused ? style.color : nil,
+            bold: isFocused ? style.bold : false,
+            content
+        ).render()
+    }
+}
+
 public extension TUIView {
     func border(padding: Int = 1, color: ANSIColor? = nil, bold: Bool = false) -> some TUIView {
         Border(padding: padding, color: color, bold: bold, self)
+    }
+
+    func focusRing(
+        padding: Int = 1,
+        isFocused: Bool,
+        style: FocusStyle = .default
+    ) -> some TUIView {
+        FocusRingBorder(padding: padding, isFocused: isFocused, style: style, self)
     }
 }
 
