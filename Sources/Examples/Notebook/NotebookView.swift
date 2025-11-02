@@ -2,8 +2,14 @@ import SwifTeaCore
 import SwifTeaUI
 
 struct NotebookView: TUIView {
-    private let minimumColumns = 120
+    private enum LayoutMode {
+        case dualColumn
+        case stacked
+    }
+
+    private let minimumColumns = 90
     private let minimumRows = 24
+    private let stackedBreakpoint = 120
 
     let state: NotebookState
     let focus: NotebookFocusField?
@@ -21,12 +27,16 @@ struct NotebookView: TUIView {
     }
 
     private func renderMainLayout() -> some TUIView {
+        let size = TerminalDimensions.current
+        let mode = layoutMode(for: size)
+        let editorWidth = preferredEditorWidth(for: size, mode: mode)
+
         let editorContent = VStack(spacing: 1, alignment: .leading) {
             Text("Editor").foreground(.yellow)
             Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
             TextField("Title...", text: titleBinding, focus: titleFocusBinding)
             Text("Body:").foreground(focus == .editorBody ? .cyan : .yellow)
-            TextArea("Body...", text: bodyBinding, focus: bodyFocusBinding, width: 60)
+            TextArea("Body...", text: bodyBinding, focus: bodyFocusBinding, width: editorWidth)
             Text("")
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
             Text("Status: \(state.statusMessage)").foreground(.cyan)
@@ -42,26 +52,28 @@ struct NotebookView: TUIView {
             note.title
         }
 
-        return VStack(spacing: 1, alignment: .leading) {
-            Text("SwifTea Notebook").foreground(.yellow).bolded()
-            Text("")
-            HStack(spacing: 6, horizontalAlignment: .leading, verticalAlignment: .top) {
-                sidebar
-                editor
+        switch mode {
+        case .dualColumn:
+            return VStack(spacing: 1, alignment: .leading) {
+                Text("SwifTea Notebook").foreground(.yellow).bolded()
+                Text("")
+                HStack(spacing: 6, horizontalAlignment: .leading, verticalAlignment: .top) {
+                    sidebar
+                    editor
+                }
+                Text("")
+                statusBar
             }
-            Text("")
-            StatusBar(
-                segmentSpacing: "  ",
-                leading: [
-                    .init("Focus: \(focusDescription)", color: .yellow)
-                ],
-                trailing: [
-                    .init("Tab next", color: .cyan),
-                    .init("Shift+Tab prev", color: .cyan),
-                    .init("↑/↓ choose note", color: .cyan),
-                    .init("Enter save", color: .cyan)
-                ]
-            )
+        case .stacked:
+            return VStack(spacing: 1, alignment: .leading) {
+                Text("SwifTea Notebook").foreground(.yellow).bolded()
+                Text("")
+                sidebar
+                Text("")
+                editor
+                Text("")
+                statusBar
+            }
         }
     }
 
@@ -93,6 +105,35 @@ struct NotebookView: TUIView {
             return "editor.body"
         case .none:
             return "none"
+        }
+    }
+
+    private var statusBar: some TUIView {
+        StatusBar(
+            segmentSpacing: "  ",
+            leading: [
+                .init("Focus: \(focusDescription)", color: .yellow)
+            ],
+            trailing: [
+                .init("Tab next", color: .cyan),
+                .init("Shift+Tab prev", color: .cyan),
+                .init("↑/↓ choose note", color: .cyan),
+                .init("Enter save", color: .cyan)
+            ]
+        )
+    }
+
+    private func layoutMode(for size: TerminalSize) -> LayoutMode {
+        size.columns >= stackedBreakpoint ? .dualColumn : .stacked
+    }
+
+    private func preferredEditorWidth(for size: TerminalSize, mode: LayoutMode) -> Int {
+        switch mode {
+        case .dualColumn:
+            return 60
+        case .stacked:
+            let maxWidth = max(min(size.columns - 8, 70), 40)
+            return maxWidth
         }
     }
 }

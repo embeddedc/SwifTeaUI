@@ -14,6 +14,14 @@ struct NotebookSnapshotTests {
         )
     }
 
+    @Test("Notebook stacks panes when width constrained")
+    func testStackedLayoutSnapshot() {
+        assertSnapshot(
+            expected: NotebookSnapshotFixtures.stacked,
+            size: TerminalSize(columns: 110, rows: 40)
+        )
+    }
+
     @Test("Notebook renders resize prompt when terminal too small")
     func testResizePromptSnapshot() {
         assertSnapshot(
@@ -294,11 +302,50 @@ SwifTea Notebook
 ┌────────────────────────────────┐
 │ Terminal too small             │
 │                                │
-│ Minimum required: 120×24       │
+│ Minimum required: 90×24        │
 │                                │
 │ Current: 80×20                 │
 │                                │
 │ Resize the window to continue. │
 └────────────────────────────────┘
+"""
+
+    static let stacked = """
+SwifTea Notebook
+
+
+
+┌────────────────────────────────┐
+│ Notes                          │
+│ >▌ Welcome to SwifTeaUI        │
+│    Keyboard Shortcuts Overview │
+│    Ideas and Enhancements      │
+└────────────────────────────────┘
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Editor                                                                           │
+│                                                                                  │
+│ Title:                                                                           │
+│                                                                                  │
+│ Welcome to SwifTeaUI                                                             │
+│                                                                                  │
+│ Body:                                                                            │
+│                                                                                  │
+│ Use Tab to focus fields on the right, Shift+Tab to return here. This             │
+│ long introduction should stay visible even when the bottom of the                │
+│ screen is busy.                                                                  │
+│                                                                                  │
+│                                                                                  │
+│                                                                                  │
+│ Saved note: Welcome to SwifTeaUI                                                 │
+│                                                                                  │
+│ Status: Tab to edit the welcome note and confirm longer content renders cleanly. │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+Focus: sidebar  Tab next  Shift+Tab prev  ↑/↓ choose note  Enter save
 """
 }
