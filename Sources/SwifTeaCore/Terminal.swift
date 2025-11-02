@@ -41,13 +41,9 @@ public enum TerminalDimensions {
         _ size: TerminalSize,
         _ perform: () throws -> T
     ) rethrows -> T {
-        let previous = current
         overrideStack.append(size)
-        currentSize = size
-        let result = try perform()
-        overrideStack.removeLast()
-        currentSize = overrideStack.last ?? previous
-        return result
+        defer { overrideStack.removeLast() }
+        return try perform()
     }
 
     private static func queryTerminalSize() -> TerminalSize {
