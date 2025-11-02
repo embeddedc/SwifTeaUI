@@ -2,6 +2,7 @@ import Testing
 @testable import SwifTeaCore
 @testable import SwifTeaUI
 
+@Suite(.serialized)
 struct MinimumSizeTests {
 
     @Test("MinimumTerminalSize renders content when requirements met")

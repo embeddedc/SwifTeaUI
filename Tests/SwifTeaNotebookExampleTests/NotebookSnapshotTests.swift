@@ -3,6 +3,7 @@ import Testing
 @testable import SwifTeaNotebookExample
 import SwifTeaCore
 
+@Suite(.serialized)
 struct NotebookSnapshotTests {
 
     @Test("Initial layout renders expected snapshot")
