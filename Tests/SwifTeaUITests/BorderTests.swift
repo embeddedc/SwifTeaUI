@@ -1,4 +1,5 @@
 import Testing
+import SnapshotTestSupport
 @testable import SwifTeaCore
 @testable import SwifTeaUI
 
@@ -36,13 +37,15 @@ struct BorderTests {
         let style = FocusStyle(indicator: "> ", color: .cyan, bold: true)
         let border = FocusRingBorder(padding: 0, isFocused: true, style: style, Text("Hi"))
         let lines = border.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        let prefix = ANSIColor.cyan.rawValue + "\u{001B}[1m"
-        let reset = ANSIColor.reset.rawValue
+        let focusRing = FocusRingSnapshotAsserter(style: style)
+        let wrappedTop = focusRing.wrapped("┌──┐")
+        let wrappedSide = focusRing.wrapped("│")
+        let wrappedBottom = focusRing.wrapped("└──┘")
 
         #expect(lines.count == 3)
-        #expect(lines[0] == prefix + "┌──┐" + reset)
-        #expect(lines[1] == prefix + "│" + reset + "Hi" + prefix + "│" + reset)
-        #expect(lines[2] == prefix + "└──┘" + reset)
+        #expect(lines[0] == wrappedTop)
+        #expect(lines[1] == wrappedSide + "Hi" + wrappedSide)
+        #expect(lines[2] == wrappedBottom)
         #expect(!lines.joined(separator: "\n").contains("> "))
     }
 

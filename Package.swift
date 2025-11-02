@@ -34,6 +34,14 @@ let package = Package(
             dependencies: ["SwifTeaUI"],
             path: "Sources/Examples/Notebook"
         ),
+        .target(
+            name: "SnapshotTestSupport",
+            dependencies: [
+                "SwifTeaUI",
+                .product(name: "Testing", package: "swift-testing")
+            ],
+            path: "Tests/TestSupport"
+        ),
         .testTarget(
             name: "SwifTeaCoreTests",
             dependencies: [
@@ -46,6 +54,7 @@ let package = Package(
             name: "SwifTeaUITests",
             dependencies: [
                 "SwifTeaUI",
+                "SnapshotTestSupport",
                 .product(name:"Testing", package: "swift-testing")
             ]
         ),
@@ -53,6 +62,7 @@ let package = Package(
             name: "SwifTeaNotebookExampleTests",
             dependencies: [
                 "SwifTeaNotebookExample",
+                "SnapshotTestSupport",
                 .product(name: "Testing", package: "swift-testing")
             ]
         )
