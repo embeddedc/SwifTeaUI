@@ -10,28 +10,6 @@ struct NotebookView: TUIView {
     let bodyFocusBinding: Binding<Bool>
 
     var body: some TUIView {
-        let sidebarLines = state.notes.enumerated().map { index, note -> String in
-            let pointer = (index == state.selectedIndex) ? ">" : " "
-            let focusMarker = (focus == .sidebar && index == state.selectedIndex) ? "▌" : " "
-            let lineContent = "\(pointer)\(focusMarker) \(note.title)"
-
-            let color: ANSIColor
-            if index == state.selectedIndex {
-                color = (focus == .sidebar) ? .cyan : .yellow
-            } else {
-                color = .green
-            }
-
-            return color.rawValue + lineContent + ANSIColor.reset.rawValue
-        }
-        let sidebarBlock = sidebarLines.joined(separator: "\n")
-
-        let sidebarContent = VStack(alignment: .leading) {
-            Text("Notes").foreground(.yellow)
-            Text(sidebarBlock)
-        }
-        let sidebar = Border(sidebarContent)
-
         let editorContent = VStack(spacing: 1, alignment: .leading) {
             Text("Editor").foreground(.yellow)
             Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
@@ -43,6 +21,15 @@ struct NotebookView: TUIView {
             Text("Status: \(state.statusMessage)").foreground(.cyan)
         }
         let editor = Border(editorContent)
+
+        let sidebar = Sidebar(
+            title: "Notes",
+            items: state.notes,
+            selection: state.selectedIndex,
+            isFocused: focus == .sidebar
+        ) { note in
+            note.title
+        }
 
         return VStack(spacing: 1, alignment: .leading) {
             Text("SwifTea Notebook").foreground(.yellow).bolded()
