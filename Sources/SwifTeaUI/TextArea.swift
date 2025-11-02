@@ -1,10 +1,10 @@
 import SwifTeaCore
 
-public struct TextArea: TUIView {
+public struct TextEditor: TUIView {
     public typealias Body = Never
 
     public var body: Never {
-        fatalError("TextArea has no body")
+        fatalError("TextEditor has no body")
     }
 
     private let placeholder: String
@@ -122,8 +122,8 @@ public struct TextArea: TUIView {
         return lines.isEmpty ? [""] : lines
     }
 
-    public func focusStyle(_ style: FocusStyle) -> TextArea {
-        TextArea(
+    public func focusRingStyle(_ style: FocusStyle) -> TextEditor {
+        TextEditor(
             placeholder,
             text: text,
             focus: focus,
@@ -134,8 +134,13 @@ public struct TextArea: TUIView {
         )
     }
 
-    public func blinkingCursor(_ enabled: Bool = true) -> TextArea {
-        TextArea(
+    @available(*, deprecated, message: "Use focusRingStyle(_:) for clarity.")
+    public func focusStyle(_ style: FocusStyle) -> TextEditor {
+        focusRingStyle(style)
+    }
+
+    public func blinkingCursor(_ enabled: Bool = true) -> TextEditor {
+        TextEditor(
             placeholder,
             text: text,
             focus: focus,
@@ -145,4 +150,18 @@ public struct TextArea: TUIView {
             blinkingCursor: enabled
         )
     }
+
+    public func focused(_ binding: Binding<Bool>) -> TextEditor {
+        TextEditor(
+            placeholder,
+            text: text,
+            focus: binding,
+            width: wrapWidth,
+            cursor: cursorSymbol,
+            focusStyle: focusStyle,
+            blinkingCursor: blinkingCursor
+        )
+    }
 }
+
+public typealias TextArea = TextEditor

@@ -37,17 +37,19 @@ struct NotebookView: TUIView {
 
         let editorContent = VStack(spacing: 1, alignment: .leading) {
             editorTitleView
-            Text("Title:").foreground(focus == .editorTitle ? .cyan : .yellow)
-            TextField("Title...", text: titleBinding, focus: titleFocusBinding)
-                .focusStyle(textInputFocusStyle)
+            Text("Title:").foregroundColor(focus == .editorTitle ? .cyan : .yellow)
+            TextField("Title...", text: titleBinding)
+                .focusRingStyle(textInputFocusStyle)
+                .focused(titleFocusBinding)
                 .blinkingCursor()
-            Text("Body:").foreground(focus == .editorBody ? .cyan : .yellow)
-            TextArea("Body...", text: bodyBinding, focus: bodyFocusBinding, width: editorWidth)
-                .focusStyle(textInputFocusStyle)
+            Text("Body:").foregroundColor(focus == .editorBody ? .cyan : .yellow)
+            TextEditor("Body...", text: bodyBinding, width: editorWidth)
+                .focusRingStyle(textInputFocusStyle)
+                .focused(bodyFocusBinding)
                 .blinkingCursor()
             Text("")
-            Text("Saved note: \(state.notes[state.selectedIndex].title)").foreground(.green)
-            Text("Status: \(state.statusMessage)").foreground(.cyan)
+            Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(.green)
+            Text("Status: \(state.statusMessage)").foregroundColor(.cyan)
         }
         let editor = FocusRingBorder(
             padding: 1,
@@ -69,7 +71,7 @@ struct NotebookView: TUIView {
         switch mode {
         case .dualColumn:
             return VStack(spacing: 1, alignment: .leading) {
-                Text("SwifTea Notebook").foreground(.yellow).bolded()
+                Text("SwifTea Notebook").foregroundColor(.yellow).bold()
                 Text("")
                 HStack(spacing: 6, horizontalAlignment: .leading, verticalAlignment: .top) {
                     sidebar
@@ -80,7 +82,7 @@ struct NotebookView: TUIView {
             }
         case .stacked:
             return VStack(spacing: 1, alignment: .leading) {
-                Text("SwifTea Notebook").foreground(.yellow).bolded()
+                Text("SwifTea Notebook").foregroundColor(.yellow).bold()
                 Text("")
                 sidebar
                 Text("")
@@ -92,13 +94,13 @@ struct NotebookView: TUIView {
     }
 
     private func renderResizeMessage(for size: TerminalSize) -> some TUIView {
-        let header = Text("SwifTea Notebook").foreground(.yellow).bolded()
+        let header = Text("SwifTea Notebook").foregroundColor(.yellow).bold()
         let message = Border(
             VStack(spacing: 1, alignment: .leading) {
-                Text("Terminal too small").foreground(.yellow)
-                Text("Minimum required: \(minimumColumns)×\(minimumRows)").foreground(.cyan)
-                Text("Current: \(size.columns)×\(size.rows)").foreground(.cyan)
-                Text("Resize the window to continue.").foreground(.green)
+                Text("Terminal too small").foregroundColor(.yellow)
+                Text("Minimum required: \(minimumColumns)×\(minimumRows)").foregroundColor(.cyan)
+                Text("Current: \(size.columns)×\(size.rows)").foregroundColor(.cyan)
+                Text("Resize the window to continue.").foregroundColor(.green)
             }
         )
 
@@ -158,7 +160,7 @@ struct NotebookView: TUIView {
         if focus == .editorTitle || focus == .editorBody {
             return Text(FocusStyle.default.apply(to: "Editor"))
         } else {
-            return Text("Editor").foreground(.yellow)
+            return Text("Editor").foregroundColor(.yellow)
         }
     }
 

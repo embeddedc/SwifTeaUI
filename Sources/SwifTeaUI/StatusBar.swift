@@ -116,14 +116,3 @@ public struct StatusBar: TUIView {
         return count
     }
 }
-
-private extension Character {
-    var isANSISequenceTerminator: Bool {
-        switch self {
-        case "a"..."z", "A"..."Z":
-            return true
-        default:
-            return false
-        }
-    }
-}

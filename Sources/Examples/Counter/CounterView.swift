@@ -11,19 +11,21 @@ struct CounterView: TUIView {
 
     var body: some TUIView {
         VStack(spacing: 1, alignment: .leading) {
-            Text("SwifTea Counter").foreground(.yellow).bolded()
-            Text("Count: \(state.count)").foreground(.green)
-            Text("[u] up | [d] down | [←/→] also work | [q]/[Esc]/[Ctrl-C] quit").foreground(.cyan)
-            Text("[Tab] move focus forward | [Shift+Tab] move back").foreground(.yellow)
+            Text("SwifTea Counter").foregroundColor(.yellow).bold()
+            Text("Count: \(state.count)").foregroundColor(.green)
+            Text("[u] up | [d] down | [←/→] also work | [q]/[Esc]/[Ctrl-C] quit").foregroundColor(.cyan)
+            Text("[Tab] move focus forward | [Shift+Tab] move back").foregroundColor(.yellow)
             Spacer()
-            Text("Note title:").foreground(focus == .noteTitle ? .cyan : .yellow)
-            TextField("Title...", text: titleBinding, focus: titleFocusBinding)
-            Text("Note body:").foreground(focus == .noteBody ? .cyan : .yellow)
-            TextField("Body...", text: bodyBinding, focus: bodyFocusBinding)
-            Text("Draft title: \(state.noteTitle)").foreground(.green)
-            Text("Draft body: \(state.noteBody)").foreground(.green)
-            Text("Last submitted -> title: \(state.lastSubmittedTitle), body: \(state.lastSubmittedBody)").foreground(.cyan)
-            Text("Focus: \(focusDescription)").foreground(.yellow)
+            Text("Note title:").foregroundColor(focus == .noteTitle ? .cyan : .yellow)
+            TextField("Title...", text: titleBinding)
+                .focused(titleFocusBinding)
+            Text("Note body:").foregroundColor(focus == .noteBody ? .cyan : .yellow)
+            TextField("Body...", text: bodyBinding)
+                .focused(bodyFocusBinding)
+            Text("Draft title: \(state.noteTitle)").foregroundColor(.green)
+            Text("Draft body: \(state.noteBody)").foregroundColor(.green)
+            Text("Last submitted -> title: \(state.lastSubmittedTitle), body: \(state.lastSubmittedBody)").foregroundColor(.cyan)
+            Text("Focus: \(focusDescription)").foregroundColor(.yellow)
         }
     }
 

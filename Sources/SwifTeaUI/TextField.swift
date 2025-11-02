@@ -41,9 +41,8 @@ public struct TextField: TUIView {
         return focusStyle.apply(to: body + cursor)
     }
 
-    public func focusStyle(_ style: FocusStyle) -> TextField {
-        var copy = self
-        copy = TextField(
+    public func focusRingStyle(_ style: FocusStyle) -> TextField {
+        TextField(
             placeholder,
             text: text,
             focus: focus,
@@ -51,7 +50,11 @@ public struct TextField: TUIView {
             focusStyle: style,
             blinkingCursor: blinkingCursor
         )
-        return copy
+    }
+
+    @available(*, deprecated, message: "Use focusRingStyle(_:) for clarity.")
+    public func focusStyle(_ style: FocusStyle) -> TextField {
+        focusRingStyle(style)
     }
 
     public func blinkingCursor(_ enabled: Bool = true) -> TextField {
@@ -62,6 +65,17 @@ public struct TextField: TUIView {
             cursor: cursorSymbol,
             focusStyle: focusStyle,
             blinkingCursor: enabled
+        )
+    }
+
+    public func focused(_ binding: Binding<Bool>) -> TextField {
+        TextField(
+            placeholder,
+            text: text,
+            focus: binding,
+            cursor: cursorSymbol,
+            focusStyle: focusStyle,
+            blinkingCursor: blinkingCursor
         )
     }
 }

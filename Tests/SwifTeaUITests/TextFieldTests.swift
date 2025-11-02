@@ -81,7 +81,8 @@ struct TextFieldTests {
             set: { isFocused = $0 }
         )
 
-        let field = TextField("Placeholder", text: binding, focus: focus, cursor: "|")
+        let field = TextField("Placeholder", text: binding, cursor: "|")
+            .focused(focus)
         #expect(field.render().strippingANSI() == "Placeholder")
 
         isFocused = true
@@ -195,7 +196,7 @@ struct TextFieldTests {
         let harness = Harness()
         let field = TextField("Prompt", text: harness.binding, cursor: "|")
             .blinkingCursor()
-            .focusStyle(FocusStyle(indicator: "", color: .cyan, bold: false))
+            .focusRingStyle(FocusStyle(indicator: "", color: .cyan, bold: false))
 
         let visible = field.render().strippingANSI()
         #expect(visible.hasSuffix("|"))

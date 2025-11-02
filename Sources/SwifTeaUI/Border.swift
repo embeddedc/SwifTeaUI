@@ -140,34 +140,3 @@ public extension TUIView {
         FocusRingBorder(padding: padding, isFocused: isFocused, style: style, self)
     }
 }
-
-private extension String {
-    func splitLinesPreservingEmpty() -> [String] {
-        if isEmpty { return [""] }
-        var lines: [String] = []
-        lines.reserveCapacity(count / 8)
-
-        var current = ""
-        for character in self {
-            if character == "\n" {
-                lines.append(current)
-                current = ""
-            } else {
-                current.append(character)
-            }
-        }
-        lines.append(current)
-        return lines
-    }
-}
-
-private extension Character {
-    var isANSISequenceTerminator: Bool {
-        switch self {
-        case "a"..."z", "A"..."Z":
-            return true
-        default:
-            return false
-        }
-    }
-}

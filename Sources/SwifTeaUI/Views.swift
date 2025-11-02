@@ -10,21 +10,31 @@ public struct Text: TUIView {
 
     let content: String
     var color: ANSIColor? = nil
-    var bold: Bool = false
+    var isBold: Bool = false
 
     public init(_ content: String) { self.content = content }
 
-    public func foreground(_ color: ANSIColor) -> Text {
+    public func foregroundColor(_ color: ANSIColor) -> Text {
         var copy = self; copy.color = color; return copy
     }
 
+    public func bold() -> Text {
+        var copy = self; copy.isBold = true; return copy
+    }
+
+    @available(*, deprecated, message: "Use foregroundColor(_: ) to mirror SwiftUI naming.")
+    public func foreground(_ color: ANSIColor) -> Text {
+        foregroundColor(color)
+    }
+
+    @available(*, deprecated, message: "Use bold() to mirror SwiftUI naming.")
     public func bolded() -> Text {
-        var copy = self; copy.bold = true; return copy
+        bold()
     }
 
     public func render() -> String {
         var s = content
-        if bold { s = "\u{001B}[1m" + s + ANSIColor.reset.rawValue }
+        if isBold { s = "\u{001B}[1m" + s + ANSIColor.reset.rawValue }
         if let c = color { s = c.rawValue + s + ANSIColor.reset.rawValue }
         return s
     }
@@ -59,18 +69,40 @@ public struct VStack: TUIView {
         spacing: Int = 0,
         alignment: Alignment = .leading,
         verticalAlignment: VerticalAlignment = .top,
-        height: Int? = nil,
         @TUIBuilder _ content: () -> [any TUIView]
     ) {
-        self.children = content()
-        self.spacing = max(0, spacing)
+        self.init(
+            children: content(),
+            spacing: max(0, spacing),
+            alignment: alignment,
+            verticalAlignment: verticalAlignment,
+            height: nil
+        )
+    }
+
+    private init(
+        children: [any TUIView],
+        spacing: Int,
+        alignment: Alignment,
+        verticalAlignment: VerticalAlignment,
+        height: Int?
+    ) {
+        self.children = children
+        self.spacing = spacing
         self.alignment = alignment
         self.verticalAlignment = verticalAlignment
-        if let height, height >= 0 {
-            self.height = height
-        } else {
-            self.height = nil
-        }
+        self.height = height
+    }
+
+    public func frame(height: Int?, alignment verticalAlignment: VerticalAlignment? = nil) -> VStack {
+        let sanitizedHeight = height.flatMap { max(0, $0) }
+        return VStack(
+            children: children,
+            spacing: spacing,
+            alignment: alignment,
+            verticalAlignment: verticalAlignment ?? self.verticalAlignment,
+            height: sanitizedHeight
+        )
     }
 
     public func render() -> String {
@@ -288,8 +320,8 @@ public struct HStack: TUIView {
     }
 }
 
-private extension String {
-    func splitLinesPreservingEmpty() -> [String] {
+extension String {
+    public func splitLinesPreservingEmpty() -> [String] {
         if isEmpty { return [""] }
         var lines: [String] = []
         lines.reserveCapacity(count / 8)
@@ -308,8 +340,8 @@ private extension String {
     }
 }
 
-private extension Character {
-    var isANSISequenceTerminator: Bool {
+extension Character {
+    public var isANSISequenceTerminator: Bool {
         switch self {
         case "a"..."z", "A"..."Z":
             return true
@@ -323,4 +355,24 @@ private extension Character {
 @resultBuilder
 public struct TUIBuilder {
     public static func buildBlock(_ components: any TUIView...) -> [any TUIView] { components }
+
+    public static func buildOptional(_ component: [any TUIView]?) -> [any TUIView] {
+        component ?? []
+    }
+
+    public static func buildEither(first component: [any TUIView]) -> [any TUIView] {
+        component
+    }
+
+    public static func buildEither(second component: [any TUIView]) -> [any TUIView] {
+        component
+    }
+
+    public static func buildArray(_ components: [[any TUIView]]) -> [any TUIView] {
+        components.flatMap { $0 }
+    }
+
+    public static func buildLimitedAvailability(_ component: [any TUIView]) -> [any TUIView] {
+        component
+    }
 }

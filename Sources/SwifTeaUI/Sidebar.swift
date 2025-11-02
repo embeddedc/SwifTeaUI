@@ -86,7 +86,7 @@ public struct Sidebar<Item>: TUIView {
             if isFocused {
                 return Text(style.focusStyle.apply(to: title))
             } else {
-                return Text(title).foreground(style.titleColor)
+                return Text(title).foregroundColor(style.titleColor)
             }
         }()
 

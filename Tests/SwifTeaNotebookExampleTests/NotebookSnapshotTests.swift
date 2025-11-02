@@ -183,17 +183,6 @@ private extension String {
     }
 }
 
-private extension Character {
-    var isANSISequenceTerminator: Bool {
-        switch self {
-        case "a"..."z", "A"..."Z":
-            return true
-        default:
-            return false
-        }
-    }
-}
-
 @discardableResult
 private func assertSnapshot(
     mutate: (inout NotebookApp) -> Void = { _ in },
