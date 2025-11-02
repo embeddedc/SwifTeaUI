@@ -33,14 +33,24 @@ struct NotebookView: TUIView {
 
         return VStack(spacing: 1, alignment: .leading) {
             Text("SwifTea Notebook").foreground(.yellow).bolded()
-            Text("[Tab] next focus | [Shift+Tab] previous | [↑/↓] choose note | [Enter] save body").foreground(.cyan)
             Text("")
             HStack(spacing: 6, horizontalAlignment: .leading, verticalAlignment: .top) {
                 sidebar
                 editor
             }
             Text("")
-            Text("Focus: \(focusDescription)").foreground(.yellow)
+            StatusBar(
+                segmentSpacing: "  ",
+                leading: [
+                    .init("Focus: \(focusDescription)", color: .yellow)
+                ],
+                trailing: [
+                    .init("Tab next", color: .cyan),
+                    .init("Shift+Tab prev", color: .cyan),
+                    .init("↑/↓ choose note", color: .cyan),
+                    .init("Enter save", color: .cyan)
+                ]
+            )
         }
     }
 

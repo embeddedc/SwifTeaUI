@@ -12,7 +12,7 @@ This document tracks upcoming terminal UI design paradigms for SwifTeaUI. Each e
 
 | Pattern | Purpose | Status | Next Steps |
 | --- | --- | --- | --- |
-| **Status & Command Bar** | Persistent footer for live state, modes, and shortcut hints. | Planned | Define API surface (view or modifier), decide default color scheme, prototype in Notebook example. |
+| **Status & Command Bar** | Persistent footer for live state, modes, and shortcut hints. | Implemented | Harden `StatusBar` width handling, roll out to additional demos, document customization knobs. |
 | **Focus & Navigation Cues** | Unifies how focused panes, selected rows, and cursor locations render. | Planned | Audit existing cues (TextField, Sidebar), extract shared styling helpers, add focus ring component. |
 | **Adaptive Panels** | Resizable or responsive layout primitives that collapse/expand with terminal width. | Planned | Explore width observation hooks, specify API for min/max widths, create demo with HStack resizing. |
 | **Modal Overlays** | Blocking dialogs or help palettes with dimmed background and keyboard dismissal. | Planned | Draft overlay container view, decide on focus trapping, design animation-free presentation. |
