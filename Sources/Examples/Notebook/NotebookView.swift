@@ -8,7 +8,7 @@ struct NotebookView: TUIView {
     }
 
     private let minimumColumns = 90
-    private let minimumRows = 24
+    private let minimumRows = 32
     private let stackedBreakpoint = 120
 
     let state: NotebookState

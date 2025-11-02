@@ -302,7 +302,7 @@ SwifTea Notebook
 ┌────────────────────────────────┐
 │ Terminal too small             │
 │                                │
-│ Minimum required: 90×24        │
+│ Minimum required: 90×32        │
 │                                │
 │ Current: 80×20                 │
 │                                │
