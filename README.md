@@ -26,8 +26,8 @@ Written in Swift.
 
 ### Text Input & Focus
 
-- Use `@State` to back local view data and pass `$property` as a `Binding`. `TextField` accepts that binding plus an optional `Binding<Bool>` controlling focus; it shows the cursor only while focused.
-- Declare `@FocusState` for whichever enum identifies focusable elements. `$focused.isFocused(.tag)` returns a `Binding<Bool>` you can hand to focusable views, and `$focused.moveForward(in:)` / `.moveBackward(in:)` will walk a `FocusRing`.
+- Use `@State` for local data and pass `$property` to `TextField`/`TextEditor`. These views now mirror SwiftUI naming: call `.foregroundColor(_)`, `.bold()`, `.focused(_:)`, `.blinkingCursor()`, and `.focusRingStyle(_)` to customise appearance and focus behaviour.
+- Declare `@FocusState` for whichever enum identifies focusable elements. `$focused.isFocused(.tag)` returns a `Binding<Bool>` that plugs straight into `.focused(_:)`, while `$focused.moveForward(in:)` / `.moveBackward(in:)` walk a `FocusRing`.
 - Wrap related fields in a `FocusScope` so Tab and Shift+Tab navigation can stay inside that group before falling back to a global ring. Terminal Shift+Tab arrives as `.backTab` in `KeyEvent`.
 - Typical pattern:
   ```swift
@@ -61,7 +61,14 @@ Written in Swift.
 
 ### Layout Primitives
 
-- `VStack(spacing:alignment:verticalAlignment:height:)` stacks views vertically; spacing defaults to `0`. Alignment accepts `.leading`, `.center`, or `.trailing` (only non-leading alignments pad). Optional `verticalAlignment` (`.top/.center/.bottom`) pairs with an optional `height` to insert blank rows before or after the stack—useful when centering content inside a taller column.
-- `HStack(spacing:horizontalAlignment:verticalAlignment:)` arranges columns and measures ANSI-safe widths. Horizontal alignment mirrors `VStack` while vertical alignment supports `.top`, `.center`, and `.bottom` for shorter columns.
-- The notebook example centers its header `VStack` within a fixed height and uses a center-aligned `HStack` to demonstrate the options.
+- `VStack` and `HStack` accept `spacing` and alignment arguments that mirror SwiftUI. Need a fixed height? Call `.frame(height:alignment:)` on the stack rather than passing a custom parameter.
+- Call `.padding(_:)` on any view to inset the rendered output with ANSI-aware spacing.
+- `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.
+
+### SwiftUI Parity Notes
+
+- Builders: `@TUIBuilder` now supports `if`/`if let`/`switch`/loops via `buildOptional`, `buildEither`, and `buildArray`, just like `@ViewBuilder`.
+- Text: `Text.foregroundColor(_:)` and `Text.bold()` match SwiftUI naming; the old `.foreground`/`.bolded()` methods remain as deprecated shims.
+- Inputs: `TextEditor` is the multiline field (with `typealias TextArea` for back-compat). Both `TextField` and `TextEditor` support `.focused(_:)`, `.focusRingStyle(_:)`, `.foregroundColor(_:)`, and `.blinkingCursor()`.
+- Focus: `.focused(_:)` mirrors SwiftUI’s modifier, while focus ring visuals come from `.focusRingStyle(_:)` and `FocusRingBorder`.
