@@ -51,7 +51,14 @@ public struct TextEditor: TUIView {
             lines[lines.count - 1] = focusStyle.apply(to: lines.last ?? "")
         }
 
-        return lines.joined(separator: "\n")
+        let targetWidth = wrapWidth + 1
+        let paddedLines = lines.map { line -> String in
+            let visible = HStack.visibleWidth(of: line)
+            if visible >= targetWidth { return line }
+            return line + String(repeating: " ", count: targetWidth - visible)
+        }
+
+        return paddedLines.joined(separator: "\n")
     }
 
     private func wrap(_ text: String, width: Int) -> [String] {

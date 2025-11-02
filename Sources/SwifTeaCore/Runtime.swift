@@ -178,7 +178,12 @@ private func clearBelowCursor() {
 @inline(__always)
 private func renderFrame(_ frame: String) {
     moveCursorHome()
-    writeToStdout(frame)
+    let columns = TerminalDimensions.current.columns
+    if columns > 0 {
+        writeToStdout(frame.padded(toVisibleWidth: columns))
+    } else {
+        writeToStdout(frame)
+    }
     clearBelowCursor()
     fflush(stdout)
 }
@@ -187,4 +192,57 @@ private func renderFrame(_ frame: String) {
 private func writeToStdout(_ string: String) {
     guard !string.isEmpty, let data = string.data(using: .utf8) else { return }
     try? FileHandle.standardOutput.write(contentsOf: data)
+}
+
+extension String {
+    func padded(toVisibleWidth width: Int) -> String {
+        guard width > 0 else { return self }
+
+        var result = String()
+        result.reserveCapacity(count + width)
+
+        var currentWidth = 0
+        var inEscape = false
+
+        for character in self {
+            if character == "\n" {
+                if currentWidth < width {
+                    result.append(String(repeating: " ", count: width - currentWidth))
+                }
+                result.append(character)
+                currentWidth = 0
+                inEscape = false
+                continue
+            }
+
+            result.append(character)
+
+            if character == "\u{001B}" {
+                inEscape = true
+            } else if inEscape {
+                if character.isANSISequenceTerminator {
+                    inEscape = false
+                }
+            } else {
+                currentWidth += 1
+            }
+        }
+
+        if currentWidth < width {
+            result.append(String(repeating: " ", count: width - currentWidth))
+        }
+
+        return result
+    }
+}
+
+extension Character {
+    var isANSISequenceTerminator: Bool {
+        switch self {
+        case "a"..."z", "A"..."Z":
+            return true
+        default:
+            return false
+        }
+    }
 }

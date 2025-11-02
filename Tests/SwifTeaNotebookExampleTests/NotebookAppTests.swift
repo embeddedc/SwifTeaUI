@@ -1,5 +1,6 @@
 import Testing
 @testable import SwifTeaNotebookExample
+@testable import SwifTeaCore
 
 struct NotebookAppTests {
 
@@ -29,6 +30,29 @@ struct NotebookAppTests {
         if let action {
             #expect(app.shouldExit(for: action))
         }
+    }
+
+    @Test("Pressing Enter in body preserves frame width")
+    func testEnterInBodyKeepsFrameWidthStable() {
+        var app = NotebookApp()
+        let baseline = renderNotebook(app)
+        let paddedBaseline = baseline.padded(toVisibleWidth: defaultSnapshotSize.columns)
+        let baselineWidth = paddedBaseline.strippingANSI().components(separatedBy: "\n").map { $0.count }.max() ?? 0
+
+        app.update(action: .setFocus(.editorBody))
+
+        if let action = app.mapKeyToAction(.enter) {
+            #expect(!app.shouldExit(for: action))
+            app.update(action: action)
+        } else {
+            Issue.record("Expected enter key to map to an action when body is focused")
+        }
+
+        let after = renderNotebook(app)
+        let paddedAfter = after.padded(toVisibleWidth: defaultSnapshotSize.columns)
+        let afterWidth = paddedAfter.strippingANSI().components(separatedBy: "\n").map { $0.count }.max() ?? 0
+
+        #expect(afterWidth == baselineWidth)
     }
 }
 
