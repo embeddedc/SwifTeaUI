@@ -58,6 +58,7 @@ Written in Swift.
 
 - `swift run SwifTeaCounterExample` shows the basics: counter controls alongside a focused text field.
 - `swift run SwifTeaNotebookExample` demonstrates two panes with scoped focus rings, arrow-key navigation, and text entry across multiple fields.
+- `swift run SwifTeaTaskRunnerExample` simulates a task queue, showcasing the spinner view inline and in the status bar for live progress feedback.
 
 ### Layout Primitives
 
@@ -72,3 +73,7 @@ Written in Swift.
 - Text: `Text.foregroundColor(_:)` and `Text.bold()` match SwiftUI naming; the old `.foreground`/`.bolded()` methods remain as deprecated shims.
 - Inputs: `TextEditor` is the multiline field (with `typealias TextArea` for back-compat). Both `TextField` and `TextEditor` support `.focused(_:)`, `.focusRingStyle(_:)`, `.foregroundColor(_:)`, and `.blinkingCursor()`.
 - Focus: `.focused(_:)` mirrors SwiftUI’s modifier, while focus ring visuals come from `.focusRingStyle(_:)` and `FocusRingBorder`.
+
+### Feedback Widgets
+
+- `Spinner` renders an animated activity indicator that follows the runtime clock—use it inline with other views or embed its output inside components like `StatusBar` when background work is in flight.
