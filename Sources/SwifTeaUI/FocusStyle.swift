@@ -2,12 +2,12 @@ import SwifTeaCore
 
 public struct FocusStyle {
     public var indicator: String
-    public var color: ANSIColor
+    public var color: ANSIColor?
     public var bold: Bool
 
     public init(
         indicator: String = "▌ ",
-        color: ANSIColor = .cyan,
+        color: ANSIColor? = .cyan,
         bold: Bool = true
     ) {
         self.indicator = indicator
@@ -18,16 +18,16 @@ public struct FocusStyle {
     public static let `default` = FocusStyle(indicator: "", color: .cyan, bold: true)
 
     public func apply(to string: String) -> String {
-        let styled: String
+        var styled = string
         if bold {
-            styled = "\u{001B}[1m" + string + ANSIColor.reset.rawValue
-        } else {
-            styled = string
+            styled = "\u{001B}[1m" + styled + ANSIColor.reset.rawValue
         }
-        let colored = color.rawValue + styled + ANSIColor.reset.rawValue
+        if let color {
+            styled = color.rawValue + styled + ANSIColor.reset.rawValue
+        }
         if indicator.isEmpty {
-            return colored
+            return styled
         }
-        return indicator + colored
+        return indicator + styled
     }
 }

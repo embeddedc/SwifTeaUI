@@ -1,4 +1,5 @@
 import SwifTeaCore
+import SwifTeaUI
 @testable import SwifTeaNotebookExample
 
 let defaultSnapshotSize = TerminalSize(columns: 140, rows: 40)

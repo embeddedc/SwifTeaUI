@@ -9,16 +9,20 @@ public struct FocusRingSnapshotAsserter {
 
     public init(style: FocusStyle = .default) {
         self.style = style
-        var prefix = style.color.rawValue
+        var prefix = ""
+        if let color = style.color {
+            prefix += color.rawValue
+        }
         if style.bold {
             prefix += "\u{001B}[1m"
         }
         self.prefix = prefix
-        self.suffix = ANSIColor.reset.rawValue
+        self.suffix = prefix.isEmpty ? "" : ANSIColor.reset.rawValue
     }
 
     public func wrapped(_ content: String) -> String {
-        prefix + content + suffix
+        guard !prefix.isEmpty else { return content }
+        return prefix + content + suffix
     }
 
     @discardableResult

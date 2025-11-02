@@ -33,7 +33,7 @@ struct NotebookView: TUIView {
 
         let focusRingStyle = FocusStyle.default
         let editorIsFocused = focus == .editorTitle || focus == .editorBody
-        let textInputFocusStyle = FocusStyle(indicator: "", color: .cyan, bold: false)
+        let textInputFocusStyle = FocusStyle(indicator: "", color: nil, bold: false)
 
         let editorContent = VStack(spacing: 1, alignment: .leading) {
             editorTitleView

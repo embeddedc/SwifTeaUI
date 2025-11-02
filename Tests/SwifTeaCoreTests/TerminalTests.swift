@@ -8,6 +8,7 @@ import Glibc
 import Darwin
 #endif
 
+@Suite(.serialized)
 struct TerminalTests {
 
     @Test("Cursor helpers emit ANSI visibility sequences")

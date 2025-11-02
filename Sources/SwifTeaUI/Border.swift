@@ -117,9 +117,10 @@ public struct FocusRingBorder<Content: TUIView>: TUIView {
     }
 
     public func render() -> String {
-        Border(
+        let borderColor: ANSIColor? = isFocused ? style.color : nil
+        return Border(
             padding: padding,
-            color: isFocused ? style.color : nil,
+            color: borderColor,
             bold: isFocused ? style.bold : false,
             content
         ).render()
