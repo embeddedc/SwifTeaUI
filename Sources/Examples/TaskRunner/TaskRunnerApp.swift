@@ -2,11 +2,11 @@ import SwifTeaCore
 import SwifTeaUI
 
 @main
-struct TaskRunnerApp: SwifTeaApp {
-    var body: some SwifTeaScene { TaskRunnerScene() }
+struct TaskRunnerApp: TUIApp {
+    var body: some TUIScene { TaskRunnerScene() }
 }
 
-struct TaskRunnerScene: SwifTeaScene {
+struct TaskRunnerScene: TUIScene {
     typealias Model = TaskRunnerModel
     typealias Action = TaskRunnerModel.Action
 

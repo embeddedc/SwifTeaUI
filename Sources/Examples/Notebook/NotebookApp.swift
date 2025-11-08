@@ -2,12 +2,12 @@ import SwifTeaCore
 import SwifTeaUI
 
 @main
-struct NotebookApp: SwifTeaApp {
+struct NotebookApp: TUIApp {
     static var framesPerSecond: Int { 120 }
-    var body: some SwifTeaScene { NotebookScene() }
+    var body: some TUIScene { NotebookScene() }
 }
 
-struct NotebookScene: SwifTeaScene {
+struct NotebookScene: TUIScene {
     typealias Model = NotebookModel
     typealias Action = NotebookModel.Action
 

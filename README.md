@@ -14,13 +14,13 @@ A modern, declarative **Terminal UI framework for Swift**, inspired by SwiftUI a
 
 ```swift
 @main
-struct CounterApp: SwifTeaApp {
-    var body: some SwifTeaScene {
+struct CounterApp: TUIApp {
+    var body: some TUIScene {
         CounterScene()
     }
 }
 
-struct CounterScene: SwifTeaScene {
+struct CounterScene: TUIScene {
     typealias Model = CounterModel
     typealias Action = CounterModel.Action
 

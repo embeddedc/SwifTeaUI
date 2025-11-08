@@ -26,7 +26,7 @@ extension Never: TUIView {
     }
 }
 
-public protocol TUIApp {
+public protocol TUIScene {
     associatedtype Model = Self
     associatedtype Action = Never
     associatedtype Content: TUIView
@@ -43,11 +43,9 @@ public protocol TUIApp {
     func shouldExit(for action: Action) -> Bool
 }
 
-public protocol SwifTeaScene: TUIApp {}
-
 @resultBuilder
-public enum SwifTeaSceneBuilder {
-    public static func buildBlock<Content: SwifTeaScene>(_ content: Content) -> Content {
+public enum TUISceneBuilder {
+    public static func buildBlock<Content: TUIScene>(_ content: Content) -> Content {
         content
     }
 }
@@ -73,7 +71,7 @@ public enum ANSIColor: String {
 
 public enum SwifTea {
     /// Bubble Tea–style runtime loop. Owns terminal, input routing, rendering.
-    public static func brew<App: TUIApp>(_ app: App, fps: Int = 20) {
+    public static func brew<App: TUIScene>(_ app: App, fps: Int = 20) {
         var app = app
         let frameDelay = useconds_t(1_000_000 / max(1, fps))
 
@@ -130,18 +128,18 @@ public enum SwifTea {
 // MARK: - Declarative app entry point
 
 /// SwiftUI-like entry wrapper that boots the runtime automatically.
-public protocol SwifTeaApp {
-    associatedtype Body: SwifTeaScene
+public protocol TUIApp {
+    associatedtype Body: TUIScene
     init()
     static var framesPerSecond: Int { get }
-    @SwifTeaSceneBuilder var body: Body { get }
+    @TUISceneBuilder var body: Body { get }
 }
 
-public extension SwifTeaApp where Body == Self, Self: SwifTeaScene {
+public extension TUIApp where Body == Self, Self: TUIScene {
     var body: Self { self }
 }
 
-public extension SwifTeaApp {
+public extension TUIApp {
     static var framesPerSecond: Int { 20 }
 
     static func main() {

@@ -2,12 +2,12 @@ import SwifTeaCore
 import SwifTeaUI
 
 @main
-struct CounterApp: SwifTeaApp {
+struct CounterApp: TUIApp {
     static var framesPerSecond: Int { 30 }
-    var body: some SwifTeaScene { CounterScene() }
+    var body: some TUIScene { CounterScene() }
 }
 
-struct CounterScene: SwifTeaScene {
+struct CounterScene: TUIScene {
     typealias Model = CounterModel
     typealias Action = CounterModel.Action
 
