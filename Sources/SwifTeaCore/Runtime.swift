@@ -118,6 +118,22 @@ public enum SwifTea {
     }
 }
 
+// MARK: - Declarative app entry point
+
+/// SwiftUI-like entry wrapper that boots the runtime automatically.
+public protocol SwifTeaApp: TUIApp {
+    init()
+    static var framesPerSecond: Int { get }
+}
+
+public extension SwifTeaApp {
+    static var framesPerSecond: Int { 20 }
+
+    static func main() {
+        SwifTea.brew(Self.init(), fps: framesPerSecond)
+    }
+}
+
 private final class FrameLogger {
     private let handle: FileHandle
     private var frameIndex: Int = 0

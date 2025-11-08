@@ -1,7 +1,10 @@
 import SwifTeaCore
 import SwifTeaUI
 
-struct CounterApp: TUIApp {
+@main
+struct CounterApp: SwifTeaApp {
+    static var framesPerSecond: Int { 30 }
+
     enum Action {
         case increment
         case decrement

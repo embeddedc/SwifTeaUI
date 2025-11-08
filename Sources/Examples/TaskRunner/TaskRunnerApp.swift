@@ -1,7 +1,8 @@
 import SwifTeaCore
 import SwifTeaUI
 
-struct TaskRunnerApp: TUIApp {
+@main
+struct TaskRunnerApp: SwifTeaApp {
     enum Action {
         case advance
         case fail

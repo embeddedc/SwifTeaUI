@@ -1,7 +1,9 @@
 import SwifTeaCore
 import SwifTeaUI
 
-struct NotebookApp: TUIApp {
+@main
+struct NotebookApp: SwifTeaApp {
+    static var framesPerSecond: Int { 120 }
     enum Action {
         case selectNext
         case selectPrevious
