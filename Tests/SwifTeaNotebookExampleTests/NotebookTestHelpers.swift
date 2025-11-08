@@ -19,6 +19,6 @@ func renderNotebook(
     }
 
     return TerminalDimensions.withTemporarySize(size) {
-        app.view(model: app).render()
+        app.view(model: app.model).render()
     }
 }

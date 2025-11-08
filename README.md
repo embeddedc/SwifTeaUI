@@ -21,9 +21,43 @@ struct CounterApp: SwifTeaApp {
 }
 
 struct CounterScene: SwifTeaScene {
-    // reducer + view logic here
+    typealias Model = CounterModel
+    typealias Action = CounterModel.Action
+
+    var model: CounterModel
+
+    init(model: CounterModel = CounterModel()) {
+        self.model = model
+    }
+
+    mutating func update(action: Action) {
+        model.update(action: action)
+    }
+
+    func view(model: CounterModel) -> some TUIView {
+        CounterView(state: model.state)
+    }
+}
+
+struct CounterModel {
+    enum Action { case increment, decrement }
+
+    @State private var state: CounterState
+
+    init(state: CounterState = CounterState()) {
+        self._state = State(wrappedValue: state)
+    }
+
+    mutating func update(action: Action) {
+        switch action {
+        case .increment: state.count += 1
+        case .decrement: state.count -= 1
+        }
+    }
 }
 ```
+
+Tests (or previews) can now inject preconfigured scenes via `CounterScene(model: CounterModel(state: previewState))`.
 Written in Swift.
 
 ### Text Input & Focus

@@ -8,6 +8,33 @@ struct NotebookApp: SwifTeaApp {
 }
 
 struct NotebookScene: SwifTeaScene {
+    typealias Model = NotebookModel
+    typealias Action = NotebookModel.Action
+
+    var model: NotebookModel
+
+    init(model: NotebookModel = NotebookModel()) {
+        self.model = model
+    }
+
+    mutating func update(action: Action) {
+        model.update(action: action)
+    }
+
+    func view(model: NotebookModel) -> some TUIView {
+        model.makeView()
+    }
+
+    func mapKeyToAction(_ key: KeyEvent) -> Action? {
+        self.model.mapKeyToAction(key)
+    }
+
+    func shouldExit(for action: Action) -> Bool {
+        model.shouldExit(for: action)
+    }
+}
+
+struct NotebookModel {
     enum Action {
         case selectNext
         case selectPrevious
@@ -19,12 +46,22 @@ struct NotebookScene: SwifTeaScene {
         case quit
     }
 
-    @State private var state = NotebookState()
-    private let viewModel = NotebookViewModel()
-    private let focusCoordinator = NotebookFocusCoordinator()
-    @FocusState private var focusedField: NotebookFocusField? = .sidebar
+    @State private var state: NotebookState
+    private let viewModel: NotebookViewModel
+    private let focusCoordinator: NotebookFocusCoordinator
+    @FocusState private var focusedField: NotebookFocusField?
 
-    var model: NotebookScene { self }
+    init(
+        state: NotebookState = NotebookState(),
+        focusedField: NotebookFocusField? = .sidebar,
+        viewModel: NotebookViewModel = NotebookViewModel(),
+        focusCoordinator: NotebookFocusCoordinator = NotebookFocusCoordinator()
+    ) {
+        self._state = State(wrappedValue: state)
+        self._focusedField = FocusState(wrappedValue: focusedField)
+        self.viewModel = viewModel
+        self.focusCoordinator = focusCoordinator
+    }
 
     mutating func update(action: Action) {
         switch action {
@@ -51,14 +88,14 @@ struct NotebookScene: SwifTeaScene {
         }
     }
 
-    func view(model: NotebookScene) -> some TUIView {
+    func makeView() -> some TUIView {
         NotebookView(
-            state: model.state,
-            focus: model.focusedField,
-            titleBinding: model.titleBinding,
-            bodyBinding: model.bodyBinding,
-            titleFocusBinding: model.titleFocusBinding,
-            bodyFocusBinding: model.bodyFocusBinding
+            state: state,
+            focus: focusedField,
+            titleBinding: titleBinding,
+            bodyBinding: bodyBinding,
+            titleFocusBinding: titleFocusBinding,
+            bodyFocusBinding: bodyFocusBinding
         )
     }
 

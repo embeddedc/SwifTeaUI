@@ -8,6 +8,33 @@ struct CounterApp: SwifTeaApp {
 }
 
 struct CounterScene: SwifTeaScene {
+    typealias Model = CounterModel
+    typealias Action = CounterModel.Action
+
+    var model: CounterModel
+
+    init(model: CounterModel = CounterModel()) {
+        self.model = model
+    }
+
+    mutating func update(action: Action) {
+        model.update(action: action)
+    }
+
+    func view(model: CounterModel) -> some TUIView {
+        model.makeView()
+    }
+
+    func mapKeyToAction(_ key: KeyEvent) -> Action? {
+        self.model.mapKeyToAction(key)
+    }
+
+    func shouldExit(for action: Action) -> Bool {
+        model.shouldExit(for: action)
+    }
+}
+
+struct CounterModel {
     enum Action {
         case increment
         case decrement
@@ -18,12 +45,22 @@ struct CounterScene: SwifTeaScene {
         case focusPrevious
     }
 
-    @State private var state = CounterState()
-    private let viewModel = CounterViewModel()
-    private let focusCoordinator = CounterFocusCoordinator()
-    @FocusState private var focusedField: CounterFocusField? = .controls
+    @State private var state: CounterState
+    private let viewModel: CounterViewModel
+    private let focusCoordinator: CounterFocusCoordinator
+    @FocusState private var focusedField: CounterFocusField?
 
-    var model: CounterScene { self }
+    init(
+        state: CounterState = CounterState(),
+        focusedField: CounterFocusField? = .controls,
+        viewModel: CounterViewModel = CounterViewModel(),
+        focusCoordinator: CounterFocusCoordinator = CounterFocusCoordinator()
+    ) {
+        self._state = State(wrappedValue: state)
+        self._focusedField = FocusState(wrappedValue: focusedField)
+        self.viewModel = viewModel
+        self.focusCoordinator = focusCoordinator
+    }
 
     mutating func update(action: Action) {
         switch action {
@@ -48,14 +85,14 @@ struct CounterScene: SwifTeaScene {
         }
     }
 
-    func view(model: CounterScene) -> some TUIView {
+    func makeView() -> some TUIView {
         CounterView(
-            state: model.state,
-            focus: model.focusedField,
-            titleBinding: model.titleBinding,
-            bodyBinding: model.bodyBinding,
-            titleFocusBinding: model.titleFocusBinding,
-            bodyFocusBinding: model.bodyFocusBinding
+            state: state,
+            focus: focusedField,
+            titleBinding: titleBinding,
+            bodyBinding: bodyBinding,
+            titleFocusBinding: titleFocusBinding,
+            bodyFocusBinding: bodyFocusBinding
         )
     }
 

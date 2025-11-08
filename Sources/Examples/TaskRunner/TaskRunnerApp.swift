@@ -7,6 +7,33 @@ struct TaskRunnerApp: SwifTeaApp {
 }
 
 struct TaskRunnerScene: SwifTeaScene {
+    typealias Model = TaskRunnerModel
+    typealias Action = TaskRunnerModel.Action
+
+    var model: TaskRunnerModel
+
+    init(model: TaskRunnerModel = TaskRunnerModel()) {
+        self.model = model
+    }
+
+    mutating func update(action: Action) {
+        model.update(action: action)
+    }
+
+    func view(model: TaskRunnerModel) -> some TUIView {
+        model.makeView()
+    }
+
+    func mapKeyToAction(_ key: KeyEvent) -> Action? {
+        self.model.mapKeyToAction(key)
+    }
+
+    func shouldExit(for action: Action) -> Bool {
+        model.shouldExit(for: action)
+    }
+}
+
+struct TaskRunnerModel {
     enum Action {
         case advance
         case fail
@@ -14,10 +41,16 @@ struct TaskRunnerScene: SwifTeaScene {
         case quit
     }
 
-    @State private var state = TaskRunnerState()
-    private let viewModel = TaskRunnerViewModel()
+    @State private var state: TaskRunnerState
+    private let viewModel: TaskRunnerViewModel
 
-    var model: TaskRunnerScene { self }
+    init(
+        state: TaskRunnerState = TaskRunnerState(),
+        viewModel: TaskRunnerViewModel = TaskRunnerViewModel()
+    ) {
+        self._state = State(wrappedValue: state)
+        self.viewModel = viewModel
+    }
 
     mutating func update(action: Action) {
         state.tickToasts()
@@ -34,8 +67,8 @@ struct TaskRunnerScene: SwifTeaScene {
         }
     }
 
-    func view(model: TaskRunnerScene) -> some TUIView {
-        TaskRunnerView(state: model.state)
+    func makeView() -> some TUIView {
+        TaskRunnerView(state: state)
     }
 
     func mapKeyToAction(_ key: KeyEvent) -> Action? {
