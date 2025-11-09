@@ -37,6 +37,10 @@ struct TaskRunnerScene: TUIScene {
     func shouldExit(for action: Action) -> Bool {
         model.shouldExit(for: action)
     }
+
+    mutating func handleTerminalResize(from oldSize: TerminalSize, to newSize: TerminalSize) {
+        model.updateTerminalMetrics(TerminalMetrics(size: newSize))
+    }
 }
 
 struct TaskRunnerModel {
@@ -150,6 +154,10 @@ struct TaskRunnerModel {
     func stepID(at index: Int) -> UUID? {
         guard state.steps.indices.contains(index) else { return nil }
         return state.steps[index].id
+    }
+
+    mutating func updateTerminalMetrics(_ metrics: TerminalMetrics) {
+        state.updateTerminalMetrics(metrics)
     }
 
     private mutating func startEffectsForRunningSteps() {

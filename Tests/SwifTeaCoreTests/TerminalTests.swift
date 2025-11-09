@@ -48,4 +48,25 @@ struct TerminalTests {
         #expect(TerminalDimensions.current != TerminalSize.zero)
         #expect(TerminalDimensions.current != custom)
     }
+
+    @Test("Terminal metrics classify width and height size classes")
+    func testTerminalMetricsSizeClasses() {
+        let compact = TerminalMetrics(
+            size: TerminalSize(columns: 80, rows: 20),
+            compactWidthThreshold: 90,
+            compactHeightThreshold: 25
+        )
+        #expect(compact.horizontalSizeClass == .compact)
+        #expect(compact.verticalSizeClass == .compact)
+        #expect(compact.isCompact)
+
+        let regular = TerminalMetrics(
+            size: TerminalSize(columns: 140, rows: 50),
+            compactWidthThreshold: 90,
+            compactHeightThreshold: 25
+        )
+        #expect(regular.horizontalSizeClass == .regular)
+        #expect(regular.verticalSizeClass == .regular)
+        #expect(!regular.isCompact)
+    }
 }

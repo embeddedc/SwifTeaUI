@@ -110,6 +110,12 @@ Written in Swift.
 - `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.
 
+### Terminal Awareness
+
+- Wrap any view in `MinimumTerminalSize(columns:rows:fallback:)` to display a friendly message when the window is too small. Counter and Task Runner both demonstrate this pattern so users aren’t stuck staring at broken layouts.
+- Call `TerminalMetrics.current()` to read the live terminal size plus derived size classes (regular/compact). Recompute inside views or store the value in state when `handleTerminalResize(from:to:)` fires.
+- Scenes can override `handleTerminalResize` to react to live window changes—update layout modes, kick off reflows, or enqueue actions whenever the runtime detects a terminal resize event (the runtime handles detection and calls the hook automatically).
+
 ### SwiftUI Parity Notes
 
 - Builders: `@TUIBuilder` now supports `if`/`if let`/`switch`/loops via `buildOptional`, `buildEither`, and `buildArray`, plus `Group { ... }` and `ForEach(data,id:)` for conditional & data-driven repetition just like `@ViewBuilder`.

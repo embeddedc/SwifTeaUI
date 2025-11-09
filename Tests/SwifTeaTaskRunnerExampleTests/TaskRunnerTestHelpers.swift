@@ -17,6 +17,8 @@ func renderTaskRunner(
     defer { SpinnerTimeline.shared = previousTimeline }
 
     return TerminalDimensions.withTemporarySize(size) {
-        app.view(model: app.model).render()
+        var scene = app
+        scene.model.updateTerminalMetrics(TerminalMetrics(size: size))
+        return scene.view(model: scene.model).render()
     }
 }

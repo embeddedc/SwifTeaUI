@@ -5,6 +5,14 @@ struct TaskRunnerView: TUIView {
     let state: TaskRunnerState
 
     var body: some TUIView {
+        MinimumTerminalSize(columns: 80, rows: 24) {
+            mainContent
+        } fallback: { size in
+            fallbackView(for: size)
+        }
+    }
+
+    private var mainContent: some TUIView {
         VStack(spacing: 1, alignment: .leading) {
             Group {
                 Text("SwifTea Task Runner")
@@ -31,7 +39,9 @@ struct TaskRunnerView: TUIView {
                             step: indexedStep.element,
                             variant: spinnerVariant(for: indexedStep.offset),
                             isFocused: indexedStep.offset == state.focusedIndex,
-                            isSelected: state.isSelected(indexedStep.offset)
+                            isSelected: state.isSelected(indexedStep.offset),
+                            isCompact: state.isCompactLayout,
+                            meterWidth: state.stepMeterWidth
                         )
                     }
                 }
@@ -41,9 +51,7 @@ struct TaskRunnerView: TUIView {
                     .foregroundColor(.green)
                     .underline()
             } else {
-                Text("Space toggles selection • Enter launches all selected steps • Tasks auto-complete once their timers expire.")
-                    .foregroundColor(.yellow)
-                    .italic()
+                instructionsText
             }
             StatusBar(
                 leading: statusLeadingSegments,
@@ -51,6 +59,33 @@ struct TaskRunnerView: TUIView {
             )
         }
         .padding(1)
+    }
+
+    private func fallbackView(for size: TerminalSize) -> some TUIView {
+        VStack(spacing: 1, alignment: .leading) {
+            Text("SwifTea Task Runner").foregroundColor(.yellow).bold()
+            Border(
+                VStack(spacing: 1, alignment: .leading) {
+                    Text("Terminal too small for this demo.")
+                        .foregroundColor(.yellow)
+                    Text("Needs at least 80×24, current is \(size.columns)×\(size.rows).")
+                        .foregroundColor(.cyan)
+                    Text("Resize the window and the view will resume automatically.")
+                        .foregroundColor(.green)
+                }
+            )
+        }
+        .padding(1)
+    }
+
+    private var instructionsText: some TUIView {
+        if state.isCompactLayout {
+            return Text("Enter runs • Space toggles • a=all • c=clear • f=fail • r=reset • q=quit")
+                .foregroundColor(.yellow)
+        }
+        return Text("Space toggles selection • Enter launches all selected steps • Tasks auto-complete once their timers expire.")
+            .foregroundColor(.yellow)
+            .italic()
     }
 
     private var indexedSteps: [(offset: Int, element: TaskRunnerState.Step)] {
@@ -71,6 +106,9 @@ struct TaskRunnerView: TUIView {
     private var selectionSummary: String {
         let selected = state.selectionCount()
         let running = state.runningIndices.count
+        if state.isCompactLayout {
+            return "\(selected) sel • \(running) run • \(state.completedCount)/\(state.totalCount)"
+        }
         return "\(selected) selected • \(running) running • \(state.completedCount)/\(state.totalCount) done"
     }
 
@@ -81,7 +119,7 @@ struct TaskRunnerView: TUIView {
 
         if let firstRunning = state.runningIndices.first {
             let variant = spinnerVariant(for: firstRunning)
-            let label = "\(state.runningIndices.count) running (\(variant.label))"
+            let label = state.isCompactLayout ? "\(state.runningIndices.count) running" : "\(state.runningIndices.count) running (\(variant.label))"
             let spinnerText = Spinner(
                 label: label,
                 style: variant.style,
@@ -97,16 +135,30 @@ struct TaskRunnerView: TUIView {
 
         let meter = ProgressMeter(
             value: state.progressFraction,
-            width: 20,
+            width: state.statusMeterWidth,
             style: .tinted(.cyan)
         ).render()
         segments.append(.init(meter))
-        segments.append(.init("\(state.selectionCount()) selected", color: state.selectionCount() > 0 ? .cyan : .yellow))
+        let selectionLabel = state.isCompactLayout ? "Sel: \(state.selectionCount())" : "\(state.selectionCount()) selected"
+        segments.append(.init(selectionLabel, color: state.selectionCount() > 0 ? .cyan : .yellow))
 
         return segments
     }
 
     private var statusTrailingSegments: [StatusBar.Segment] {
+        if state.isCompactLayout {
+            var segments: [StatusBar.Segment] = [
+                .init("[↑/↓] move", color: .yellow),
+                .init("[Space] toggle", color: .yellow),
+                .init("[Enter] run", color: .yellow),
+                .init("[q] quit", color: .yellow)
+            ]
+            if let toast = state.activeToast {
+                segments.append(.init("• \(toast.text)", color: toast.color))
+            }
+            return segments
+        }
+
         var segments: [StatusBar.Segment] = [
             .init("[↑/↓] move", color: .yellow),
             .init("[Space] toggle", color: .yellow),
@@ -131,17 +183,38 @@ struct TaskRunnerView: TUIView {
         let variant: (style: Spinner.Style, label: String)
         let isFocused: Bool
         let isSelected: Bool
+        let isCompact: Bool
+        let meterWidth: Int
 
         var body: some TUIView {
+            if isCompact {
+                return AnyTUIView(
+                    VStack(spacing: 0, alignment: .leading) {
+                        compactHeader
+                        statusView
+                    }
+                )
+            }
+            return AnyTUIView(
+                HStack(spacing: 1, verticalAlignment: .center) {
+                    focusIndicator
+                    selectionIndicator
+                    Text("\(index + 1).")
+                        .foregroundColor(.yellow)
+                        .bold()
+                    Text(step.title)
+                        .foregroundColor(titleColor)
+                    statusView
+                }
+            )
+        }
+
+        private var compactHeader: some TUIView {
             HStack(spacing: 1, verticalAlignment: .center) {
                 focusIndicator
                 selectionIndicator
-                Text("\(index + 1).")
-                    .foregroundColor(.yellow)
-                    .bold()
-                Text(step.title)
+                Text("\(index + 1). \(step.title)")
                     .foregroundColor(titleColor)
-                statusView
             }
         }
 
@@ -173,7 +246,7 @@ struct TaskRunnerView: TUIView {
                             .italic()
                         ProgressMeter(
                             value: run.progress,
-                            width: 12,
+                            width: meterWidth,
                             style: .tinted(.cyan)
                         )
                     }
@@ -203,10 +276,13 @@ struct TaskRunnerView: TUIView {
                 return .yellow
             case .running:
                 return .cyan
-            case .completed(.success):
-                return .green
-            case .completed(.failure):
-                return .yellow
+            case .completed(let result):
+                switch result {
+                case .success:
+                    return .green
+                case .failure:
+                    return .yellow
+                }
             }
         }
     }

@@ -40,6 +40,7 @@ public protocol TUIScene {
     // Optional reducer behavior when actions exist
     mutating func update(action: Action)
     mutating func initializeEffects()
+    mutating func handleTerminalResize(from oldSize: TerminalSize, to newSize: TerminalSize)
     func mapKeyToAction(_ key: KeyEvent) -> Action?
     func shouldExit(for action: Action) -> Bool
     mutating func handleFrame(deltaTime: TimeInterval)
@@ -54,6 +55,7 @@ public enum TUISceneBuilder {
 
 public extension TUIScene {
     mutating func initializeEffects() {}
+    mutating func handleTerminalResize(from oldSize: TerminalSize, to newSize: TerminalSize) {}
     mutating func handleFrame(deltaTime: TimeInterval) {}
 }
 
@@ -126,6 +128,7 @@ public enum SwifTea {
                 let size = TerminalDimensions.refresh()
                 let sizeChanged = size != lastSize
                 if sizeChanged {
+                    app.handleTerminalResize(from: lastSize, to: size)
                     clearScreenAndHome()
                 }
                 // Render

@@ -1,4 +1,5 @@
 import Foundation
+import SwifTeaCore
 import Testing
 @testable import SwifTeaTaskRunnerExample
 
@@ -55,6 +56,40 @@ struct TaskRunnerSnapshotTests {
         #expect(processed.contains("%"))
         #expect(processed.contains("• Completed Fetch configuration"))
     }
+
+    @Test("Compact terminals collapse layout hints")
+    func testCompactLayoutSnapshot() {
+        var app = TaskRunnerScene()
+        app.update(action: .startSelected)
+        if let firstID = app.model.stepID(at: 0) {
+            app.update(action: .stepProgress(id: firstID, remaining: 3, total: 4))
+        }
+        let snapshot = renderTaskRunner(
+            app,
+            size: TerminalSize(columns: 88, rows: 28),
+            time: 0
+        )
+        let processed = snapshot
+            .strippingANSI()
+            .removingTrailingSpacesPerLine()
+        #expect(
+            processed.splitLinesPreservingEmpty()
+            == TaskRunnerSnapshotFixtures.compact.splitLinesPreservingEmpty()
+        )
+    }
+
+    @Test("Tiny terminals show fallback guidance")
+    func testFallbackSnapshot() {
+        let snapshot = renderTaskRunner(
+            TaskRunnerScene(),
+            size: TerminalSize(columns: 50, rows: 16)
+        )
+        let processed = snapshot
+            .strippingANSI()
+            .removingTrailingSpacesPerLine()
+        #expect(processed.contains("Terminal too small for this demo."))
+        #expect(processed.contains("Needs at least 80×24"))
+    }
 }
 
 private enum TaskRunnerSnapshotFixtures {
@@ -101,6 +136,34 @@ private enum TaskRunnerSnapshotFixtures {
  Space toggles selection • Enter launches all selected steps • Tasks auto-complete once their timers expire.
 
  Task Runner - 1 running (ASCII) [#                   ]   5% 0 selected  [↑/↓] move [Space] toggle [Enter] run [a] all [c] clear [f] fail [r] reset [q] quit • Started Fetch configuration
+
+"""
+
+    static let compact = """
+
+ SwifTea Task Runner
+ Select multiple steps, start them together, and watch them fan out asynchronously.
+
+ ┌──────────────────────────────┐
+ │ Process Queue                │
+ │                              │
+ │ 0 sel • 1 run • 0/5          │
+ │                              │
+ │ ➤ [ ] 1. Fetch configuration │
+ │ - 25% [##        ]  25%      │
+ │   [ ] 2. Run analysis        │
+ │ pending                      │
+ │   [ ] 3. Write summary       │
+ │ pending                      │
+ │   [ ] 4. Publish artifacts   │
+ │ pending                      │
+ │   [ ] 5. Notify subscribers  │
+ │ pending                      │
+ └──────────────────────────────┘
+
+ Enter runs • Space toggles • a=all • c=clear • f=fail • r=reset • q=quit
+
+ Task Runner - 1 running [              ]   5% Sel: 0  [↑/↓] move [Space] toggle [Enter] run [q] quit • Started Fetch configuration
 
 """
 }

@@ -59,6 +59,7 @@ struct TaskRunnerState {
     var toastQueue = StatusToastQueue(maxCount: 3, defaultTTL: 6)
     var focusedIndex: Int
     var selectedIndices: Set<Int>
+    var terminalMetrics: TerminalMetrics
 
     private var toastTimeAccumulator: TimeInterval
     private let toastTickIntervalValue: TimeInterval = 0.5
@@ -67,12 +68,14 @@ struct TaskRunnerState {
         steps: [Step] = Step.defaults(),
         focusedIndex: Int = 0,
         selectedIndices: Set<Int> = [],
-        toastTimeAccumulator: TimeInterval = 0
+        toastTimeAccumulator: TimeInterval = 0,
+        terminalMetrics: TerminalMetrics = TerminalMetrics.current()
     ) {
         self.steps = steps
         self.focusedIndex = steps.isEmpty ? -1 : max(0, min(focusedIndex, steps.count - 1))
         self.selectedIndices = selectedIndices
         self.toastTimeAccumulator = toastTimeAccumulator
+        self.terminalMetrics = terminalMetrics
     }
 }
 
@@ -153,5 +156,21 @@ extension TaskRunnerState {
 
     var toastTickInterval: TimeInterval {
         toastTickIntervalValue
+    }
+
+    mutating func updateTerminalMetrics(_ metrics: TerminalMetrics) {
+        terminalMetrics = metrics
+    }
+
+    var isCompactLayout: Bool {
+        terminalMetrics.horizontalSizeClass == .compact || terminalMetrics.size.columns < 95
+    }
+
+    var statusMeterWidth: Int {
+        isCompactLayout ? 14 : 20
+    }
+
+    var stepMeterWidth: Int {
+        isCompactLayout ? 10 : 12
     }
 }
