@@ -41,6 +41,7 @@ public protocol TUIScene {
     mutating func update(action: Action)
     func mapKeyToAction(_ key: KeyEvent) -> Action?
     func shouldExit(for action: Action) -> Bool
+    mutating func handleFrame(deltaTime: TimeInterval)
 }
 
 @resultBuilder
@@ -48,6 +49,10 @@ public enum TUISceneBuilder {
     public static func buildBlock<Content: TUIScene>(_ content: Content) -> Content {
         content
     }
+}
+
+public extension TUIScene {
+    mutating func handleFrame(deltaTime: TimeInterval) {}
 }
 
 // MARK: - ANSI helpers & color
@@ -102,7 +107,13 @@ public enum SwifTea {
         var staticFrameStreak = 0
         let maxStaticFrames = 5
         var lastSize = TerminalDimensions.current
+        var lastTime = ProcessInfo.processInfo.systemUptime
         while running {
+            let now = ProcessInfo.processInfo.systemUptime
+            let deltaTime = now - lastTime
+            lastTime = now
+            app.handleFrame(deltaTime: deltaTime)
+
             let size = TerminalDimensions.refresh()
             let sizeChanged = size != lastSize
             if sizeChanged {

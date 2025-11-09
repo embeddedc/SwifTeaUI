@@ -1,8 +1,19 @@
+import Foundation
 import SwifTeaCore
 import SwifTeaUI
 
 struct TaskRunnerState {
-    struct Step: Equatable {
+    struct Step: Identifiable, Equatable {
+        struct Run: Equatable {
+            var remaining: TimeInterval
+            let total: TimeInterval
+
+            var progress: Double {
+                guard total > 0 else { return 1 }
+                return min(1, max(0, (total - remaining) / total))
+            }
+        }
+
         enum Status: Equatable {
             enum Result: Equatable {
                 case success
@@ -10,67 +21,123 @@ struct TaskRunnerState {
             }
 
             case pending
-            case running
+            case running(Run)
             case completed(Result)
         }
 
+        let id: UUID
         var title: String
+        var duration: TimeInterval
         var status: Status
+
+        init(
+            id: UUID = UUID(),
+            title: String,
+            duration: TimeInterval,
+            status: Status = .pending
+        ) {
+            self.id = id
+            self.title = title
+            self.duration = duration
+            self.status = status
+        }
+
+        static func defaults() -> [Step] {
+            [
+                Step(title: "Fetch configuration", duration: 4.0),
+                Step(title: "Run analysis", duration: 5.5),
+                Step(title: "Write summary", duration: 3.5),
+                Step(title: "Publish artifacts", duration: 4.5),
+                Step(title: "Notify subscribers", duration: 2.5)
+            ]
+        }
     }
 
-    var steps: [Step] = [
-        Step(title: "Fetch configuration", status: .pending),
-        Step(title: "Run analysis", status: .pending),
-        Step(title: "Write summary", status: .pending),
-        Step(title: "Publish artifacts", status: .pending)
-    ]
-
+    var steps: [Step]
     var toastQueue = StatusToastQueue(maxCount: 3, defaultTTL: 6)
+    var focusedIndex: Int
+    var selectedIndices: Set<Int>
+
+    private var toastTimeAccumulator: TimeInterval
+    private let toastTickInterval: TimeInterval = 0.5
+
+    init(
+        steps: [Step] = Step.defaults(),
+        focusedIndex: Int = 0,
+        selectedIndices: Set<Int> = [],
+        toastTimeAccumulator: TimeInterval = 0
+    ) {
+        self.steps = steps
+        self.focusedIndex = steps.isEmpty ? -1 : max(0, min(focusedIndex, steps.count - 1))
+        self.selectedIndices = selectedIndices
+        self.toastTimeAccumulator = toastTimeAccumulator
+    }
 }
 
 extension TaskRunnerState {
-    var activeIndex: Int? {
-        steps.firstIndex { step in
-            if case .running = step.status { return true }
+    var runningIndices: [Int] {
+        steps.indices.filter { index in
+            if case .running = steps[index].status { return true }
             return false
         }
     }
 
-    var activeStep: Step? {
-        activeIndex.map { steps[$0] }
-    }
-
     var completedCount: Int {
-        steps.reduce(into: 0) { count, step in
-            if case .completed = step.status {
-                count += 1
-            }
+        steps.reduce(0) { partial, step in
+            if case .completed = step.status { return partial + 1 }
+            return partial
         }
     }
 
-    var totalCount: Int {
-        steps.count
-    }
+    var totalCount: Int { steps.count }
 
     var isComplete: Bool {
-        completedCount == totalCount && totalCount > 0
+        guard totalCount > 0 else { return false }
+        return steps.allSatisfy { step in
+            if case .completed = step.status { return true }
+            return false
+        }
     }
 
     var progressFraction: Double {
         guard totalCount > 0 else { return 0 }
-        return Double(completedCount) / Double(totalCount)
-    }
-
-    mutating func tickToasts() {
-        toastQueue.tick()
-    }
-
-    mutating func clearToasts() {
-        toastQueue.clear()
+        let completed = steps.reduce(0.0) { sum, step in
+            switch step.status {
+            case .pending:
+                return sum
+            case .running(let run):
+                return sum + run.progress
+            case .completed:
+                return sum + 1
+            }
+        }
+        return min(1, max(0, completed / Double(totalCount)))
     }
 
     var activeToast: StatusToast? {
         toastQueue.activeToast
+    }
+
+    func isSelected(_ index: Int) -> Bool {
+        selectedIndices.contains(index)
+    }
+
+    func selectionCount() -> Int {
+        selectedIndices.count
+    }
+
+    mutating func tickToasts(deltaTime: TimeInterval) {
+        guard deltaTime > 0 else { return }
+        toastTimeAccumulator += deltaTime
+        while toastTimeAccumulator >= toastTickInterval {
+            toastTimeAccumulator -= toastTickInterval
+            toastQueue.tick()
+        }
+    }
+
+    mutating func clearToasts() {
+        toastQueue.clear()
+        toastTimeAccumulator = 0
     }
 
     mutating func enqueueToast(

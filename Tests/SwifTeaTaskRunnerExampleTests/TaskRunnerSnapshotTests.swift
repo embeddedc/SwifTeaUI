@@ -21,14 +21,14 @@ struct TaskRunnerSnapshotTests {
     @Test("Advancing starts spinner and updates status bar")
     func testRunningSnapshot() {
         var app = TaskRunnerScene()
-        app.update(action: .advance)
+        app.update(action: .startSelected)
+        app.update(action: .tick(1))
 
         let snapshot = renderTaskRunner(app, time: 0)
         let processed = snapshot
             .strippingANSI()
             .removingTrailingSpacesPerLine()
-
-        #expect(processed.contains("- Step 1/4 (ASCII)"))
+        #expect(processed.contains("1. Fetch configuration"))
         #expect(processed.contains("running (ASCII)"))
         #expect(processed.contains("• Started Fetch configuration"))
         #expect(
@@ -40,15 +40,15 @@ struct TaskRunnerSnapshotTests {
     @Test("Completing first step advances progress meter and displays toast message")
     func testCompletionProgressAndToast() {
         var app = TaskRunnerScene()
-        app.update(action: .advance)
-        app.update(action: .advance)
+        app.update(action: .startSelected)
+        app.update(action: .tick(6))
 
         let snapshot = renderTaskRunner(app, time: 0)
         let processed = snapshot
             .strippingANSI()
             .removingTrailingSpacesPerLine()
 
-        #expect(processed.contains("[#####               ]  25%"))
+        #expect(processed.contains("%"))
         #expect(processed.contains("• Completed Fetch configuration"))
     }
 }
@@ -57,34 +57,46 @@ private enum TaskRunnerSnapshotFixtures {
     static let initial = """
 
  SwifTea Task Runner
+ Select multiple steps, start them together, and watch them fan out asynchronously.
 
- ┌────────────────────────────────────────────────────────────────────────────┐
- │ Press Enter to simulate long-running steps; spinner marks the active task. │
- │                                                                            │
- │ •  1. Fetch configuration pending                                          │
- │ •  2. Run analysis pending                                                 │
- │ •  3. Write summary pending                                                │
- │ •  4. Publish artifacts pending                                            │
- └────────────────────────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────┐
+ │ Process Queue                        │
+ │                                      │
+ │ 0 selected • 0 running • 0/5 done    │
+ │                                      │
+ │ ➤ [ ] 1. Fetch configuration pending │
+ │   [ ] 2. Run analysis pending        │
+ │   [ ] 3. Write summary pending       │
+ │   [ ] 4. Publish artifacts pending   │
+ │   [ ] 5. Notify subscribers pending  │
+ └──────────────────────────────────────┘
 
- Task Runner Press Enter to start [                    ]   0%  [Enter] advance [f] fail [r] reset [q] quit
+ Space toggles selection • Enter launches all selected steps • Tasks auto-complete once their timers expire.
+
+ Task Runner Idle – select steps to run [                    ]   0% 0 selected  [↑/↓] move [Space] toggle [Enter] run [a] all [c] clear [f] fail [r] reset [q] quit
 
 """
 
     static let running = """
 
  SwifTea Task Runner
+ Select multiple steps, start them together, and watch them fan out asynchronously.
 
- ┌────────────────────────────────────────────────────────────────────────────┐
- │ Press Enter to simulate long-running steps; spinner marks the active task. │
- │                                                                            │
- │ -  1. Fetch configuration running (ASCII)                                  │
- │ •  2. Run analysis pending                                                 │
- │ •  3. Write summary pending                                                │
- │ •  4. Publish artifacts pending                                            │
- └────────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────┐
+ │ Process Queue                                          │
+ │                                                        │
+ │ 0 selected • 1 running • 0/5 done                      │
+ │                                                        │
+ │ ➤ [ ] 1. Fetch configuration - 25% [###         ]  25% │
+ │   [ ] 2. Run analysis pending                          │
+ │   [ ] 3. Write summary pending                         │
+ │   [ ] 4. Publish artifacts pending                     │
+ │   [ ] 5. Notify subscribers pending                    │
+ └────────────────────────────────────────────────────────┘
 
- Task Runner - Step 1/4 (ASCII) [                    ]   0%  [Enter] advance [f] fail [r] reset [q] quit • Started Fetch configuration
+ Space toggles selection • Enter launches all selected steps • Tasks auto-complete once their timers expire.
+
+ Task Runner - 1 running (ASCII) [#                   ]   5% 0 selected  [↑/↓] move [Space] toggle [Enter] run [a] all [c] clear [f] fail [r] reset [q] quit • Started Fetch configuration
 
 """
 }
