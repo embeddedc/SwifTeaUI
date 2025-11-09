@@ -33,10 +33,15 @@ public struct Text: TUIView {
     }
 
     public func render() -> String {
-        var s = content
-        if isBold { s = "\u{001B}[1m" + s + ANSIColor.reset.rawValue }
-        if let c = color { s = c.rawValue + s + ANSIColor.reset.rawValue }
-        return s
+        var prefix = ""
+        if let color = color {
+            prefix += color.rawValue
+        }
+        if isBold {
+            prefix += "\u{001B}[1m"
+        }
+        guard !prefix.isEmpty else { return content }
+        return prefix + content + ANSIColor.reset.rawValue
     }
 }
 
