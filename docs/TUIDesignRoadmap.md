@@ -23,7 +23,6 @@ This document tracks upcoming terminal UI design paradigms for SwifTeaUI. Each e
 | **Preview Builders** | Declarative wrappers that hydrate scenes/models with canned state for demos/tests. | Planned | Design lightweight builder API (e.g., `CounterScene.preview(state:)`), ensure builders can run `TUIScene` without the full runtime, and share fixtures between previews & snapshot tests. |
 | **Observable State Objects** | Property wrapper + observation hooks for class-based models (`@StateObject` analog). | Planned | Define observable protocol + lifecycle, ensure reference mutations trigger re-render safely, and document reducer interaction/testing strategy. |
 | **ForEach Diffing** | Re-render only changed elements by leveraging user-provided IDs. | Planned | Track IDs per element, compare against prior frame, and emit minimal updates once runtime supports partial rendering. |
-| **Group View** | Lightweight wrapper to compose conditional builder output without imposing layout. | Planned | Add SwiftUI-style `Group` that simply returns its children array so builders can branch without wrapping content in extra stacks. |
 
 ## Working Notes
 

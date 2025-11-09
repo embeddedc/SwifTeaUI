@@ -351,6 +351,20 @@ extension Character {
     }
 }
 
+public struct Group: TUIView {
+    private let children: [any TUIView]
+
+    public init(@TUIBuilder _ content: () -> [any TUIView]) {
+        self.children = content()
+    }
+
+    public func render() -> String {
+        children.map { $0.render() }.joined(separator: "\n")
+    }
+
+    public var body: some TUIView { self }
+}
+
 public struct ForEach<Data: RandomAccessCollection, ID: Hashable>: TUIView {
     private let data: Data
     private let content: (Data.Element) -> [any TUIView]
