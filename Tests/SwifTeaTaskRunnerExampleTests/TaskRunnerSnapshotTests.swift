@@ -22,7 +22,9 @@ struct TaskRunnerSnapshotTests {
     func testRunningSnapshot() {
         var app = TaskRunnerScene()
         app.update(action: .startSelected)
-        app.update(action: .tick(1))
+        if let firstID = app.model.stepID(at: 0) {
+            app.update(action: .stepProgress(id: firstID, remaining: 3, total: 4))
+        }
 
         let snapshot = renderTaskRunner(app, time: 0)
         let processed = snapshot
@@ -41,7 +43,9 @@ struct TaskRunnerSnapshotTests {
     func testCompletionProgressAndToast() {
         var app = TaskRunnerScene()
         app.update(action: .startSelected)
-        app.update(action: .tick(6))
+        if let firstID = app.model.stepID(at: 0) {
+            app.update(action: .stepCompleted(id: firstID, result: .success))
+        }
 
         let snapshot = renderTaskRunner(app, time: 0)
         let processed = snapshot

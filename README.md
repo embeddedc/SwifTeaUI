@@ -60,6 +60,13 @@ struct CounterModel {
 Tests (or previews) can now inject preconfigured scenes via `CounterScene(model: CounterModel(state: previewState))`.
 Written in Swift.
 
+### Async Effects & Dispatch
+
+- Dispatch reducer actions from anywhere—call `SwifTea.dispatch(Action.someCase)` to enqueue work on the runtime thread without reaching for global state.
+- Kick off background work with `SwifTea.dispatch(Effect<Action>.run { send in try await Task.sleep(...) ; send(.completed) }, id: "network", cancelExisting: true)`; use `id` to cancel or replace in-flight effects.
+- Need a timer? `Effect<Action>.timer(every: 0.5) { .tick }` emits `.tick` every 500 ms until you cancel it (either explicitly via `SwifTea.cancelEffects(withID:)` or when the runtime shuts down).
+- Scenes can override `initializeEffects()` to seed timers or long-lived work as soon as the runtime boots, keeping `handleFrame` free for animation-heavy cases only.
+
 ### Text Input & Focus
 
 - Use `@State` for local data and pass `$property` to `TextField`/`TextEditor`. These views now mirror SwiftUI naming: call `.foregroundColor(_)`, `.bold()`, `.focused(_:)`, `.blinkingCursor()`, and `.focusRingStyle(_)` to customise appearance and focus behaviour.

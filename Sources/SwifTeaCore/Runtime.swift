@@ -39,6 +39,7 @@ public protocol TUIScene {
 
     // Optional reducer behavior when actions exist
     mutating func update(action: Action)
+    mutating func initializeEffects()
     func mapKeyToAction(_ key: KeyEvent) -> Action?
     func shouldExit(for action: Action) -> Bool
     mutating func handleFrame(deltaTime: TimeInterval)
@@ -52,6 +53,7 @@ public enum TUISceneBuilder {
 }
 
 public extension TUIScene {
+    mutating func initializeEffects() {}
     mutating func handleFrame(deltaTime: TimeInterval) {}
 }
 
@@ -93,59 +95,262 @@ public enum SwifTea {
         var app = app
         let frameDelay = useconds_t(1_000_000 / max(1, fps))
 
+        let actionQueue = ActionQueue<App.Action>()
+        let effectRuntime = EffectRuntime(actionQueue: actionQueue)
         let originalMode = setRawMode()
         hideCursor()
         let frameLogger = FrameLogger.make()
         defer {
             showCursor()
             restoreMode(originalMode)
+            effectRuntime.cancelAll()
         }
         clearScreenAndHome()
         TerminalDimensions.refresh()
-        var running = true
-        var lastFrame: String? = nil
-        var staticFrameStreak = 0
-        let maxStaticFrames = 5
-        var lastSize = TerminalDimensions.current
-        var lastTime = ProcessInfo.processInfo.systemUptime
-        while running {
-            let now = ProcessInfo.processInfo.systemUptime
-            let deltaTime = now - lastTime
-            lastTime = now
-            app.handleFrame(deltaTime: deltaTime)
+        RuntimeDispatch.install(queue: actionQueue, effectRuntime: effectRuntime) {
+            app.initializeEffects()
 
-            let size = TerminalDimensions.refresh()
-            let sizeChanged = size != lastSize
-            if sizeChanged {
-                clearScreenAndHome()
-            }
-            // Render
-            let frame = app.view(model: app.model).render()
-            let changed = frame != lastFrame
-            let forceRefresh = sizeChanged || (!changed ? (staticFrameStreak >= maxStaticFrames) : false)
-            frameLogger?.log(frame, changed: changed, forced: forceRefresh)
-            if changed || forceRefresh {
-                renderFrame(frame)
-                lastFrame = frame
-                staticFrameStreak = 0
-            } else {
-                staticFrameStreak += 1
-            }
-            lastSize = size
+            var running = true
+            var lastFrame: String? = nil
+            var staticFrameStreak = 0
+            let maxStaticFrames = 5
+            var lastSize = TerminalDimensions.current
+            var lastTime = ProcessInfo.processInfo.systemUptime
 
-            // Input → Action
-            if let ke = readKeyEvent(), let action = app.mapKeyToAction(ke) {
-                if app.shouldExit(for: action) {
-                    running = false
-                } else {
-                    app.update(action: action)
+            while running {
+                let now = ProcessInfo.processInfo.systemUptime
+                let deltaTime = now - lastTime
+                lastTime = now
+                app.handleFrame(deltaTime: deltaTime)
+
+                let size = TerminalDimensions.refresh()
+                let sizeChanged = size != lastSize
+                if sizeChanged {
+                    clearScreenAndHome()
                 }
+                // Render
+                let frame = app.view(model: app.model).render()
+                let changed = frame != lastFrame
+                let forceRefresh = sizeChanged || (!changed ? (staticFrameStreak >= maxStaticFrames) : false)
+                frameLogger?.log(frame, changed: changed, forced: forceRefresh)
+                if changed || forceRefresh {
+                    renderFrame(frame)
+                    lastFrame = frame
+                    staticFrameStreak = 0
+                } else {
+                    staticFrameStreak += 1
+                }
+                lastSize = size
+
+                // Input → Action
+                if let ke = readKeyEvent(), let action = app.mapKeyToAction(ke) {
+                    if app.shouldExit(for: action) {
+                        running = false
+                    } else {
+                        app.update(action: action)
+                    }
+                }
+
+                // Async effects → Action
+                if running {
+                    let pendingActions = actionQueue.drain()
+                    if !pendingActions.isEmpty {
+                        for action in pendingActions {
+                            if app.shouldExit(for: action) {
+                                running = false
+                                break
+                            }
+                            app.update(action: action)
+                        }
+                    }
+                }
+
+                usleep(frameDelay)
             }
-
-            // (Future) timers/async effects enqueue actions here
-
-            usleep(frameDelay)
         }
+    }
+
+    public static func dispatch<Action>(_ action: Action) {
+        RuntimeDispatch.dispatch(action: action)
+    }
+
+    public static func dispatch<Action>(
+        _ effect: Effect<Action>,
+        id: AnyHashable? = nil,
+        cancelExisting: Bool = false
+    ) {
+        RuntimeDispatch.dispatch(effect: effect, id: id, cancelExisting: cancelExisting)
+    }
+
+    public static func cancelEffects(withID id: AnyHashable) {
+        RuntimeDispatch.cancel(id: id)
+    }
+}
+
+// MARK: - Runtime effect plumbing
+
+private final class ActionQueue<Action> {
+    private var buffer: [Action] = []
+    private let lock = NSLock()
+
+    func enqueue(_ action: Action) {
+        lock.lock()
+        buffer.append(action)
+        lock.unlock()
+    }
+
+    func drain() -> [Action] {
+        lock.lock()
+        let actions = buffer
+        buffer.removeAll(keepingCapacity: true)
+        lock.unlock()
+        return actions
+    }
+}
+
+private final class EffectRuntime<Action> {
+    private let actionQueue: ActionQueue<Action>
+    private let lock = NSLock()
+    private var tasks: [UUID: Task<Void, Never>] = [:]
+    private var keyedTasks: [AnyHashable: Set<UUID>] = [:]
+
+    init(actionQueue: ActionQueue<Action>) {
+        self.actionQueue = actionQueue
+    }
+
+    func run(_ effect: Effect<Action>, id: AnyHashable?, cancelExisting: Bool) {
+        if cancelExisting, let id {
+            cancel(id)
+        }
+
+        let effectID = UUID()
+        let task = Task(priority: effect.taskPriority) { [weak self] in
+            guard let self else { return }
+            await effect.run { [weak self] action in
+                self?.actionQueue.enqueue(action)
+            }
+        }
+
+        lock.lock()
+        tasks[effectID] = task
+        if let id {
+            var set = keyedTasks[id, default: []]
+            set.insert(effectID)
+            keyedTasks[id] = set
+        }
+        lock.unlock()
+
+        Task.detached(priority: .background) { [weak self] in
+            _ = await task.result
+            self?.remove(effectID, keyedBy: id)
+        }
+    }
+
+    func cancel(_ id: AnyHashable) {
+        lock.lock()
+        guard let uuids = keyedTasks.removeValue(forKey: id) else {
+            lock.unlock()
+            return
+        }
+        let tasksToCancel = uuids.compactMap { tasks.removeValue(forKey: $0) }
+        lock.unlock()
+        for task in tasksToCancel {
+            task.cancel()
+        }
+    }
+
+    func cancelAll() {
+        lock.lock()
+        let runningTasks = Array(tasks.values)
+        tasks.removeAll()
+        keyedTasks.removeAll()
+        lock.unlock()
+        for task in runningTasks {
+            task.cancel()
+        }
+    }
+
+    private func remove(_ uuid: UUID, keyedBy id: AnyHashable?) {
+        lock.lock()
+        tasks.removeValue(forKey: uuid)
+        if let id {
+            var set = keyedTasks[id] ?? []
+            set.remove(uuid)
+            if set.isEmpty {
+                keyedTasks.removeValue(forKey: id)
+            } else {
+                keyedTasks[id] = set
+            }
+        }
+        lock.unlock()
+    }
+}
+
+private struct RuntimeDispatchBox {
+    let sendAction: (Any) -> Void
+    let runEffect: (Any, AnyHashable?, Bool) -> Void
+    let cancelEffects: (AnyHashable) -> Void
+}
+
+private enum RuntimeDispatch {
+    private static let lock = NSLock()
+    private static var box: RuntimeDispatchBox?
+
+    static func install<Action>(
+        queue: ActionQueue<Action>,
+        effectRuntime: EffectRuntime<Action>,
+        body: () -> Void
+    ) {
+        lock.lock()
+        box = RuntimeDispatchBox(
+            sendAction: { anyAction in
+                guard let action = anyAction as? Action else {
+                    assertionFailure("Dispatched action does not match active scene Action type.")
+                    return
+                }
+                queue.enqueue(action)
+            },
+            runEffect: { anyEffect, id, cancelExisting in
+                guard let effect = anyEffect as? Effect<Action> else {
+                    assertionFailure("Dispatched effect does not match active scene Action type.")
+                    return
+                }
+                effectRuntime.run(effect, id: id, cancelExisting: cancelExisting)
+            },
+            cancelEffects: { id in
+                effectRuntime.cancel(id)
+            }
+        )
+        lock.unlock()
+
+        body()
+
+        lock.lock()
+        box = nil
+        lock.unlock()
+    }
+
+    static func dispatch<Action>(action: Action) {
+        lock.lock()
+        let current = box
+        lock.unlock()
+        guard let current else { return }
+        current.sendAction(action)
+    }
+
+    static func dispatch<Action>(effect: Effect<Action>, id: AnyHashable?, cancelExisting: Bool) {
+        lock.lock()
+        let current = box
+        lock.unlock()
+        guard let current else { return }
+        current.runEffect(effect, id, cancelExisting)
+    }
+
+    static func cancel(id: AnyHashable) {
+        lock.lock()
+        let current = box
+        lock.unlock()
+        current?.cancelEffects(id)
     }
 }
 

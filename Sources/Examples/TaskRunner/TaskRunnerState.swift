@@ -12,6 +12,8 @@ struct TaskRunnerState {
                 guard total > 0 else { return 1 }
                 return min(1, max(0, (total - remaining) / total))
             }
+
+            static let minimumDuration: TimeInterval = 0.1
         }
 
         enum Status: Equatable {
@@ -59,7 +61,7 @@ struct TaskRunnerState {
     var selectedIndices: Set<Int>
 
     private var toastTimeAccumulator: TimeInterval
-    private let toastTickInterval: TimeInterval = 0.5
+    private let toastTickIntervalValue: TimeInterval = 0.5
 
     init(
         steps: [Step] = Step.defaults(),
@@ -129,8 +131,8 @@ extension TaskRunnerState {
     mutating func tickToasts(deltaTime: TimeInterval) {
         guard deltaTime > 0 else { return }
         toastTimeAccumulator += deltaTime
-        while toastTimeAccumulator >= toastTickInterval {
-            toastTimeAccumulator -= toastTickInterval
+        while toastTimeAccumulator >= toastTickIntervalValue {
+            toastTimeAccumulator -= toastTickIntervalValue
             toastQueue.tick()
         }
     }
@@ -147,5 +149,9 @@ extension TaskRunnerState {
         atFront: Bool = true
     ) {
         toastQueue.enqueue(text, color: color, ttl: ttl, atFront: atFront)
+    }
+
+    var toastTickInterval: TimeInterval {
+        toastTickIntervalValue
     }
 }

@@ -26,16 +26,16 @@ struct TaskRunnerScene: TUIScene {
         model.makeView()
     }
 
+    mutating func initializeEffects() {
+        model.initializeEffects()
+    }
+
     func mapKeyToAction(_ key: KeyEvent) -> Action? {
         self.model.mapKeyToAction(key)
     }
 
     func shouldExit(for action: Action) -> Bool {
         model.shouldExit(for: action)
-    }
-
-    mutating func handleFrame(deltaTime: TimeInterval) {
-        model.update(action: .tick(deltaTime))
     }
 }
 
@@ -49,11 +49,16 @@ struct TaskRunnerModel {
         case failSelected
         case reset
         case quit
-        case tick(TimeInterval)
+        case toastTick
+        case stepProgress(id: UUID, remaining: TimeInterval, total: TimeInterval)
+        case stepCompleted(id: UUID, result: TaskRunnerState.Step.Status.Result)
     }
 
     @State private var state: TaskRunnerState
     private let viewModel: TaskRunnerViewModel
+    private var activeStepEffects: Set<UUID> = []
+    private static let toastTimerID = "TaskRunner.toastTimer"
+    private static let progressTick: TimeInterval = TaskRunnerState.Step.Run.minimumDuration
 
     init(
         state: TaskRunnerState = TaskRunnerState(),
@@ -63,10 +68,23 @@ struct TaskRunnerModel {
         self.viewModel = viewModel
     }
 
+    mutating func initializeEffects() {
+        SwifTea.dispatch(
+            Effect<Action>.timer(
+                every: state.toastTickInterval,
+                initialDelay: state.toastTickInterval,
+                repeats: true
+            ) { .toastTick },
+            id: Self.toastTimerID,
+            cancelExisting: true
+        )
+    }
+
     mutating func update(action: Action) {
         switch action {
         case .startSelected:
             viewModel.startSelected(state: &state)
+            startEffectsForRunningSteps()
         case .toggleSelection:
             viewModel.toggleSelection(state: &state)
         case .selectAll:
@@ -76,11 +94,18 @@ struct TaskRunnerModel {
         case .moveFocus(let offset):
             viewModel.moveFocus(offset: offset, state: &state)
         case .failSelected:
-            viewModel.markFailure(state: &state)
+            let canceled = viewModel.markFailure(state: &state)
+            cancelEffects(for: canceled)
         case .reset:
             viewModel.reset(state: &state)
-        case .tick(let delta):
-            viewModel.tick(state: &state, deltaTime: delta)
+            cancelAllStepEffects()
+        case .toastTick:
+            viewModel.tickToasts(state: &state, interval: state.toastTickInterval)
+        case .stepProgress(let id, let remaining, let total):
+            viewModel.updateProgress(id: id, remaining: remaining, total: total, state: &state)
+        case .stepCompleted(let id, let result):
+            viewModel.finishStep(id: id, result: result, state: &state)
+            activeStepEffects.remove(id)
         case .quit:
             break
         }
@@ -120,5 +145,65 @@ struct TaskRunnerModel {
             return true
         }
         return false
+    }
+
+    func stepID(at index: Int) -> UUID? {
+        guard state.steps.indices.contains(index) else { return nil }
+        return state.steps[index].id
+    }
+
+    private mutating func startEffectsForRunningSteps() {
+        for step in state.steps {
+            guard case .running(let run) = step.status else { continue }
+            guard !activeStepEffects.contains(step.id) else { continue }
+            activeStepEffects.insert(step.id)
+            let effect = makeStepEffect(for: step, run: run)
+            SwifTea.dispatch(effect, id: step.id, cancelExisting: true)
+        }
+    }
+
+    private mutating func cancelEffects(for ids: [UUID]) {
+        guard !ids.isEmpty else { return }
+        for id in ids {
+            if activeStepEffects.contains(id) {
+                SwifTea.cancelEffects(withID: id)
+                activeStepEffects.remove(id)
+            }
+        }
+    }
+
+    private mutating func cancelAllStepEffects() {
+        for id in activeStepEffects {
+            SwifTea.cancelEffects(withID: id)
+        }
+        activeStepEffects.removeAll()
+    }
+
+    private func makeStepEffect(
+        for step: TaskRunnerState.Step,
+        run: TaskRunnerState.Step.Run
+    ) -> Effect<Action> {
+        let total = max(Self.progressTick, run.total)
+        return Effect<Action>.run { send in
+            var remaining = total
+            while remaining > 0 {
+                let slice = min(Self.progressTick, remaining)
+                try await Task.sleep(nanoseconds: slice.nanosecondsClamped())
+                if Task.isCancelled { return }
+                remaining = max(0, remaining - slice)
+                send(.stepProgress(id: step.id, remaining: remaining, total: total))
+            }
+            send(.stepCompleted(id: step.id, result: .success))
+        }
+    }
+}
+
+private extension TimeInterval {
+    func nanosecondsClamped() -> UInt64 {
+        if self.isNaN || self <= 0 {
+            return 0
+        }
+        let capped = min(self, TimeInterval(UInt64.max) / 1_000_000_000)
+        return UInt64(capped * 1_000_000_000)
     }
 }

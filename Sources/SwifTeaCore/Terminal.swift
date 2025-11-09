@@ -22,18 +22,28 @@ public struct TerminalSize: Equatable, Sendable {
 public enum TerminalDimensions {
     private static var currentSize = TerminalSize(columns: 80, rows: 24)
     private static var overrideStack: [TerminalSize] = []
+    private static let overrideLock = NSLock()
 
     public static var current: TerminalSize {
-        overrideStack.last ?? currentSize
+        overrideLock.lock()
+        let value = overrideStack.last ?? currentSize
+        overrideLock.unlock()
+        return value
     }
 
     @discardableResult
     public static func refresh() -> TerminalSize {
+        overrideLock.lock()
         if let override = overrideStack.last {
+            overrideLock.unlock()
             return override
         }
+        overrideLock.unlock()
+
         let queried = queryTerminalSize()
+        overrideLock.lock()
         currentSize = queried
+        overrideLock.unlock()
         return queried
     }
 
@@ -41,8 +51,14 @@ public enum TerminalDimensions {
         _ size: TerminalSize,
         _ perform: () throws -> T
     ) rethrows -> T {
+        overrideLock.lock()
         overrideStack.append(size)
-        defer { overrideStack.removeLast() }
+        overrideLock.unlock()
+        defer {
+            overrideLock.lock()
+            overrideStack.removeLast()
+            overrideLock.unlock()
+        }
         return try perform()
     }
 

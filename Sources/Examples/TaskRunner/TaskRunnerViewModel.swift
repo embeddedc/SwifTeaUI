@@ -1,4 +1,5 @@
 import Foundation
+import SwifTeaCore
 
 struct TaskRunnerViewModel {
     func moveFocus(offset: Int, state: inout TaskRunnerState) {
@@ -35,7 +36,7 @@ struct TaskRunnerViewModel {
         for index in targets {
             guard state.steps.indices.contains(index) else { continue }
             guard case .pending = state.steps[index].status else { continue }
-            let duration = max(0.5, state.steps[index].duration)
+            let duration = max(TaskRunnerState.Step.Run.minimumDuration, max(0, state.steps[index].duration))
             let run = TaskRunnerState.Step.Run(remaining: duration, total: duration)
             state.steps[index].status = .running(run)
             state.enqueueToast("Started \(state.steps[index].title)", color: .cyan, atFront: true)
@@ -47,16 +48,18 @@ struct TaskRunnerViewModel {
         }
     }
 
-    func markFailure(state: inout TaskRunnerState) {
+    func markFailure(state: inout TaskRunnerState) -> [UUID] {
         let targets = selectionOrFocus(state: state)
-        guard !targets.isEmpty else { return }
+        guard !targets.isEmpty else { return [] }
         var failedAny = false
+        var cancelled: [UUID] = []
 
         for index in targets {
             guard state.steps.indices.contains(index) else { continue }
             guard case .running = state.steps[index].status else { continue }
             failedAny = true
             let title = state.steps[index].title
+            cancelled.append(state.steps[index].id)
             state.steps[index].status = .completed(.failure)
             state.enqueueToast("Failed \(title)", color: .yellow)
         }
@@ -64,31 +67,12 @@ struct TaskRunnerViewModel {
         if failedAny {
             state.selectedIndices.subtract(Set(targets))
         }
+
+        return cancelled
     }
 
-    func tick(state: inout TaskRunnerState, deltaTime: TimeInterval) {
-        guard deltaTime > 0 else { return }
-        state.tickToasts(deltaTime: deltaTime)
-
-        var completedTitles: [String] = []
-        for index in state.steps.indices {
-            guard case .running(var run) = state.steps[index].status else { continue }
-            run.remaining = max(0, run.remaining - deltaTime)
-            if run.remaining <= 0 {
-                state.steps[index].status = .completed(.success)
-                completedTitles.append(state.steps[index].title)
-            } else {
-                state.steps[index].status = .running(run)
-            }
-        }
-
-        for title in completedTitles {
-            state.enqueueToast("Completed \(title)", color: .green)
-        }
-
-        if state.isComplete && !completedTitles.isEmpty {
-            state.enqueueToast("All tasks complete", color: .green)
-        }
+    func tickToasts(state: inout TaskRunnerState, interval: TimeInterval) {
+        state.tickToasts(deltaTime: interval)
     }
 
     func reset(state: inout TaskRunnerState) {
@@ -99,6 +83,35 @@ struct TaskRunnerViewModel {
         state.focusedIndex = state.steps.isEmpty ? -1 : 0
         state.clearToasts()
         state.enqueueToast("Progress reset", color: .yellow)
+    }
+
+    func updateProgress(
+        id: UUID,
+        remaining: TimeInterval,
+        total: TimeInterval,
+        state: inout TaskRunnerState
+    ) {
+        guard let index = state.steps.firstIndex(where: { $0.id == id }) else { return }
+        guard case .running(var run) = state.steps[index].status else { return }
+        let effectiveTotal = max(run.total, total)
+        run.remaining = max(0, min(effectiveTotal, remaining))
+        state.steps[index].status = .running(run)
+    }
+
+    func finishStep(
+        id: UUID,
+        result: TaskRunnerState.Step.Status.Result,
+        state: inout TaskRunnerState
+    ) {
+        guard let index = state.steps.firstIndex(where: { $0.id == id }) else { return }
+        state.steps[index].status = .completed(result)
+        let title = state.steps[index].title
+        let color: ANSIColor = (result == .success) ? .green : .yellow
+        let verb = (result == .success) ? "Completed" : "Failed"
+        state.enqueueToast("\(verb) \(title)", color: color)
+        if result == .success && state.isComplete {
+            state.enqueueToast("All tasks complete", color: .green)
+        }
     }
 
     private func selectionOrFocus(state: TaskRunnerState) -> [Int] {
