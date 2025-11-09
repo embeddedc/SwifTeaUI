@@ -12,6 +12,7 @@ public struct Text: TUIView {
     var color: ANSIColor? = nil
     var isBold: Bool = false
     var isItalic: Bool = false
+    var isUnderlined: Bool = false
 
     public init(_ content: String) { self.content = content }
 
@@ -25,6 +26,10 @@ public struct Text: TUIView {
 
     public func italic() -> Text {
         var copy = self; copy.isItalic = true; return copy
+    }
+
+    public func underline() -> Text {
+        var copy = self; copy.isUnderlined = true; return copy
     }
 
     @available(*, deprecated, message: "Use foregroundColor(_: ) to mirror SwiftUI naming.")
@@ -47,6 +52,9 @@ public struct Text: TUIView {
         }
         if isItalic {
             prefix += "\u{001B}[3m"
+        }
+        if isUnderlined {
+            prefix += "\u{001B}[4m"
         }
         guard !prefix.isEmpty else { return content }
         return prefix + content + ANSIColor.reset.rawValue

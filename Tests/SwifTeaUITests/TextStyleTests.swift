@@ -29,6 +29,12 @@ struct TextStyleTests {
         #expect(rendered == "\u{001B}[3mHi\u{001B}[0m")
     }
 
+    @Test("underline wraps content once")
+    func testUnderline() {
+        let rendered = Text("Hi").underline().render()
+        #expect(rendered == "\u{001B}[4mHi\u{001B}[0m")
+    }
+
     @Test("bold color italic combine")
     func testAllStyles() {
         let rendered = Text("Hi")
@@ -37,5 +43,16 @@ struct TextStyleTests {
             .italic()
             .render()
         #expect(rendered == "\u{001B}[36m\u{001B}[1m\u{001B}[3mHi\u{001B}[0m")
+    }
+
+    @Test("full chain includes underline")
+    func testAllStylesWithUnderline() {
+        let rendered = Text("Hi")
+            .underline()
+            .bold()
+            .foregroundColor(.yellow)
+            .italic()
+            .render()
+        #expect(rendered == "\u{001B}[33m\u{001B}[1m\u{001B}[3m\u{001B}[4mHi\u{001B}[0m")
     }
 }
