@@ -6,13 +6,14 @@ struct GroupTests {
     @Test("Group concatenates conditional children without extra layout")
     func testConditionalContent() {
         let includeDetails = true
-        let detail: any TUIView = includeDetails
-            ? AnyTUIView(Text("Details"))
-            : AnyTUIView(Text("Fallback"))
 
         let view = Group {
             Text("Header")
-            detail
+            if includeDetails {
+                Text("Details")
+            } else {
+                Text("Fallback")
+            }
             Text("Footer")
         }
 

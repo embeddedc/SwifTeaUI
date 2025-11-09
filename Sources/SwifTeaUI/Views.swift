@@ -418,7 +418,17 @@ public extension ForEach where Data.Element: Identifiable, Data.Element.ID == ID
 // SwiftUI-esque result builder
 @resultBuilder
 public struct TUIBuilder {
-    public static func buildBlock(_ components: any TUIView...) -> [any TUIView] { components }
+    public static func buildBlock(_ components: [any TUIView]...) -> [any TUIView] {
+        components.flatMap { $0 }
+    }
+
+    public static func buildExpression<Content: TUIView>(_ expression: Content) -> [any TUIView] {
+        [expression]
+    }
+
+    public static func buildExpression(_ expression: [any TUIView]) -> [any TUIView] {
+        expression
+    }
 
     public static func buildOptional(_ component: [any TUIView]?) -> [any TUIView] {
         component ?? []
