@@ -65,6 +65,19 @@ public enum ANSIColor: String {
     case green  = "\u{001B}[32m"
     case cyan   = "\u{001B}[36m"
     case yellow = "\u{001B}[33m"
+
+    public var backgroundCode: String {
+        switch self {
+        case .reset:
+            return ANSIColor.reset.rawValue
+        case .green:
+            return "\u{001B}[42m"
+        case .cyan:
+            return "\u{001B}[46m"
+        case .yellow:
+            return "\u{001B}[43m"
+        }
+    }
 }
 
 // MARK: - Public runtime namespace

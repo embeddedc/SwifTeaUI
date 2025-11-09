@@ -35,6 +35,12 @@ struct TextStyleTests {
         #expect(rendered == "\u{001B}[4mHi\u{001B}[0m")
     }
 
+    @Test("background color wraps content once")
+    func testBackgroundColor() {
+        let rendered = Text("Hi").backgroundColor(.cyan).render()
+        #expect(rendered == "\u{001B}[46mHi\u{001B}[0m")
+    }
+
     @Test("bold color italic combine")
     func testAllStyles() {
         let rendered = Text("Hi")
@@ -54,5 +60,17 @@ struct TextStyleTests {
             .italic()
             .render()
         #expect(rendered == "\u{001B}[33m\u{001B}[1m\u{001B}[3m\u{001B}[4mHi\u{001B}[0m")
+    }
+
+    @Test("full chain includes background color")
+    func testAllStylesWithBackground() {
+        let rendered = Text("Hi")
+            .foregroundColor(.green)
+            .backgroundColor(.yellow)
+            .bold()
+            .italic()
+            .underline()
+            .render()
+        #expect(rendered == "\u{001B}[32m\u{001B}[43m\u{001B}[1m\u{001B}[3m\u{001B}[4mHi\u{001B}[0m")
     }
 }
