@@ -14,7 +14,7 @@ struct TaskRunnerView: TUIView {
 
     private var mainContent: some TUIView {
         VStack(spacing: 1, alignment: .leading) {
-            Group {
+            VStack(spacing: 0, alignment: .leading) {
                 Text("SwifTea Task Runner")
                     .foregroundColor(.yellow)
                     .bold()

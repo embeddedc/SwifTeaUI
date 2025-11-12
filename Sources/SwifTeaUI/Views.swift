@@ -387,8 +387,12 @@ public struct Group: TUIView {
         self.children = content()
     }
 
+    func makeChildViews() -> [any TUIView] {
+        children
+    }
+
     public func render() -> String {
-        children.map { $0.render() }.joined(separator: "\n")
+        makeChildViews().map { $0.render() }.joined(separator: "\n")
     }
 
     public var body: some TUIView { self }
@@ -455,6 +459,10 @@ public struct TUIBuilder {
     }
 
     public static func buildExpression<Data, ID>(_ expression: ForEach<Data, ID>) -> [any TUIView] {
+        expression.makeChildViews()
+    }
+
+    public static func buildExpression(_ expression: Group) -> [any TUIView] {
         expression.makeChildViews()
     }
 
