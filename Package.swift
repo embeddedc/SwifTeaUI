@@ -10,7 +10,8 @@ let package = Package(
         .library(name: "SwifTeaCore", targets: ["SwifTeaCore"]),
         .executable(name: "SwifTeaCounterExample", targets: ["SwifTeaCounterExample"]),
         .executable(name: "SwifTeaNotebookExample", targets: ["SwifTeaNotebookExample"]),
-        .executable(name: "SwifTeaTaskRunnerExample", targets: ["SwifTeaTaskRunnerExample"])
+        .executable(name: "SwifTeaTaskRunnerExample", targets: ["SwifTeaTaskRunnerExample"]),
+        .executable(name: "SwifTeaPackageListExample", targets: ["SwifTeaPackageListExample"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-testing.git", branch: "main")
@@ -39,6 +40,11 @@ let package = Package(
             name: "SwifTeaTaskRunnerExample",
             dependencies: ["SwifTeaUI"],
             path: "Sources/Examples/TaskRunner"
+        ),
+        .executableTarget(
+            name: "SwifTeaPackageListExample",
+            dependencies: ["SwifTeaUI"],
+            path: "Sources/Examples/PackageList"
         ),
         .target(
             name: "SnapshotTestSupport",
