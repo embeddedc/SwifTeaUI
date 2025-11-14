@@ -1,70 +1,78 @@
 # SwifTeaUI Table Layout Plan
 
 ## Goals
-- Provide a first-class `Table` view so callers such as Mint can render tabular data without manually composing nested stacks.
-- Match SwiftUI-inspired ergonomics: declare columns once, feed in a data collection, and let the runtime align cells.
-- Preserve SwifTeaUI constraints (ASCII terminals, line-based rendering) while keeping performance predictable.
+- Provide a first-class `Table` view so SwifTeaUI apps can render structured data without nesting ad-hoc stacks.
+- Follow SwiftUI’s `Table` ergonomics: declare columns once, feed in a collection, and rely on the runtime for sizing/alignment.
+- Respect terminal constraints (monospaced grids, ANSI codes, predictable performance) while supporting multi-line cells.
 
 ## Proposed API
 ```swift
-Table(data, id: \.id, spacing: 1, divider: .bordered) {
-    TableColumn("Package", width: .flex(min: 18), alignment: .leading) { item in
-        Text(item.name).bold()
+struct Process: Identifiable { /* ... */ }
+
+Table(processes, columnSpacing: 2, rowSpacing: 1, divider: .line()) {
+    TableColumn("Name", alignment: .leading) { process in
+        Text(process.name).bold()
     }
-    TableColumn("Version", width: .fitContent, alignment: .center) { item in
-        Text(item.version)
+    TableColumn("Duration", width: .fitContent, alignment: .center) { process in
+        Text("\(process.duration)s")
     }
-    TableColumn("Status", width: .fixed(14), alignment: .trailing) { item in
-        StatusBadge(state: item.state)
+    TableColumn("State", width: .fixed(12), alignment: .trailing) { process in
+        StatusBadge(state: process.state)
     }
 } header: {
-    Text("Installed Packages").foregroundColor(.yellow).bold()
+    Text("Running Tasks").foregroundColor(.yellow).bold()
 } footer: {
-    Text("\(data.count) total packages").italic()
+    Text("\(processes.count) items").italic()
+} rowStyle: { process, index in
+    if process.isFocused { return TableRowStyle(foregroundColor: .cyan, isBold: true) }
+    if index.isMultiple(of: 2) { return TableRowStyle(backgroundColor: .brightBlack) }
+    return nil
 }
 ```
 
-- `TableColumn` captures title text (optional), width strategy (`.fixed`, `.fitContent`, `.flex(min:max:)`), alignment, and cell builder.
-- `Table` accepts an optional header/footer builder plus per-row modifiers (striping, selection highlight) via a `TableRowStyle`.
-- Provide convenience overloads when header/footer are omitted.
+### Already available
+- `TableColumn` ships today with optional title text, width strategies (`.fixed`, `.fitContent`, `.flex(min:max:)`), alignment, and builders for header/cells.
+- `Table` is implemented with header/footer builders, divider styles via `TableDividerStyle`, configurable row/column spacing, and row styling hooks.
+- Overloads exist for `Identifiable` collections (`Table(data)`), and the runtime measures column widths + cell heights eagerly so each frame renders once.
+
+### Future API Enhancements
+- Selection binding and keyboard focus helpers so tables can control global focus without extra boilerplate.
+- Key-path convenience columns (`TableColumn(value: \.name)`), default striping helpers, and divider themes with ANSI colors.
 
 ## Rendering Strategy
-1. **Column registration**: Evaluate the column builder to collect column descriptors (header view, width rule, alignment, cell closure).
+1. **Column registration**: Evaluate the column builder once to collect descriptors (header, width rule, alignment, cell closure).
 2. **Measurement pass**:
-   - For every row & column, build the cell views once (reusing `TUIBuilder`) and cache rendered strings.
-   - Track visible width (via existing `HStack.visibleWidth(of:)`) and line count per cell to handle multi-line text.
-   - Accumulate the max visible width per column; enforce width strategy (fixed overrides, `fitContent` uses max cell width, `flex` takes the larger of min width and fitContent, clamped to max if provided).
+   - Render each cell once, caching the string plus visible width/line count (reuse `HStack.visibleWidth` measurement helpers).
+   - Compute per-column widths based on the rendered cells and width strategies; clamp/expand to satisfy `.fixed`, `.fitContent`, and `.flex` rules.
 3. **Row rendering**:
-   - Render header row first (if provided), padding each header cell to column width and joining with a configurable spacing or separator glyph.
-   - Optionally render a divider (line of `─` characters) after the header when `.bordered` divider style is used.
-   - For each row, pad every cell to its column width respecting column alignment, then join into a single line per visual row (multi-line cells may expand the row height; use the same vertical alignment logic from `HStack` to balance lines).
-   - Apply row style hooks (striped background, highlight selection) by wrapping the final text in ANSI codes before joining.
-4. **Composition**: Stack header, divider, body rows, footer inside a `VStack(spacing:)`; expose the table as a regular `TUIView` so it nests inside existing layouts.
+   - Render header row (if present), padding each header cell to its column width and joining with configured spacing or separators.
+   - Optionally draw a divider (`─` line or custom style) beneath the header.
+   - For each data row, pad cells to the column width using alignment rules; multi-line cells expand the row height using `HStack`’s vertical distribution logic.
+   - Apply row styles (striped backgrounds, selection emphasis) by wrapping the composed row string with ANSI prefixes/suffixes.
+4. **Composition**: Stack header, divider, body rows, and footer inside a `VStack(spacing:)`, exposing `Table` as a standard `TUIView`.
 
 ## Implementation Phases
-1. **Foundations**
-   - Add `ColumnWidthRule` / `ColumnAlignment` helpers and a `TableColumn` struct under `Sources/SwifTeaUI/Table/`.
-   - Implement shared utilities for measuring visible widths and padding strings (can reuse or extend current `HStack` helpers).
-2. **Table Core**
-   - Create `Table<Data>` view storing data, column descriptors, spacing, divider style, header/footer closures, and optional row style closure.
-   - Implement the measurement and rendering passes described above.
-3. **Styling Layer**
-   - Introduce `TableRowStyle` protocol/struct for zebra-striping, selection highlighting, and status coloring.
-   - Support divider styles: `.none`, `.bordered`, `.custom(character:String)`.
-4. **Integrations & Ergonomics**
-   - Provide `Table` convenience initializers for simple `String` headers, default width rules, and implicit `Identifiable` data.
-   - Document how `Table` interacts with `ForEach` (e.g., reusing its diff IDs later).
+1. **Foundations (Completed)**
+   - `TableColumn`, width/alignment enums, and shared measurement helpers live in `Sources/SwifTeaUI/Table.swift`.
+   - `HStack.visibleWidth` + padding utilities already power the column measuring logic.
+2. **Table Core (Completed)**
+   - `Table<Data>` renders header/body/footer blocks, handles dividers, spacing, and caches cell strings per row.
+   - Both `id:` closure and `Identifiable` overloads are implemented.
+3. **Styling Layer (Partially Completed)**
+   - `TableRowStyle` exists for foreground/background/bold styling; divider style currently limited to `.none` / `.line`.
+   - TODO: add richer row styles (focused outline, underline) and colored/custom dividers.
+4. **Ergonomics & Docs (In Progress)**
+   - Example usage is limited to the Package List demo; README/docs still need a dedicated table section.
+   - TODO: add key-path column sugar, default row striping helpers, and focus/selection bindings inspired by SwiftUI’s table selection API.
 
 ## Testing Plan
-- Unit tests in `Tests/SwifTeaUITests/TableTests.swift` covering:
-  - Column width resolution for each rule type.
-  - Multi-line cells and alignment (leading, center, trailing).
-  - Header/divider rendering and optional footer.
-  - Row styling hooks (striped rows, selection emphasis).
-- Snapshot tests in `TaskRunnerSnapshotTests`-style fixtures for realistic datasets (Mint packages, task lists) to ensure stability.
-- Performance sanity check: verify rendering cost scales linearly with `rows * columns` and avoids redundant view construction per frame.
+- ✅ `Tests/SwifTeaUITests/TableTests.swift` exercises header/footer rendering, divider lines, width rules, and ANSI row styling.
+- Planned additions:
+  - Multi-line cell alignment + spacing assertions.
+  - Snapshot-style fixtures for realistic datasets (task list, package listing) to guard against regressions.
+  - Performance sanity tests confirming rendering work scales with `rows × columns` and avoids redundant view construction.
 
 ## Adoption Steps
-1. Land `Table` implementation behind feature flag or hidden API.
-2. Update Mint’s WIP UI to consume `Table`, ensuring API covers real-world needs (e.g., column reordering, selection highlighting).
-3. Iterate based on Mint feedback, then document the component in `README.md` with examples and ASCII screenshots.
+1. ✅ Core `Table` implementation merged (see `Sources/SwifTeaUI/Table.swift`).
+2. ✅ Package List example uses the API to validate ergonomics with real data.
+3. 🔄 Document the component (README + docs), add another sample (e.g., Task Runner), and iterate on remaining API gaps (selection, key-path helpers).
