@@ -151,6 +151,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 - `VStack` and `HStack` accept `spacing` and alignment arguments that mirror SwiftUI. Need a fixed height? Call `.frame(height:alignment:)` on the stack rather than passing a custom parameter.
 - Call `.padding(_:)` on any view to inset the rendered output with ANSI-aware spacing.
+- `ScrollView(viewport:offset:)` clamps tall content to a fixed number of rows; pair it with a `Binding<Int>` and map arrow keys to keep editors or logs scrollable without resizing the rest of the layout.
 - `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.
 

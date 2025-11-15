@@ -43,6 +43,7 @@ struct NotebookModel {
         case setFocus(NotebookFocusField?)
         case editTitle(TextFieldEvent)
         case editBody(TextFieldEvent)
+        case scrollBody(by: Int)
         case quit
     }
 
@@ -50,17 +51,20 @@ struct NotebookModel {
     private let viewModel: NotebookViewModel
     private let focusCoordinator: NotebookFocusCoordinator
     @FocusState private var focusedField: NotebookFocusField?
+    @State private var bodyScrollOffset: Int
 
     init(
         state: NotebookState = NotebookState(),
         focusedField: NotebookFocusField? = .sidebar,
         viewModel: NotebookViewModel = NotebookViewModel(),
-        focusCoordinator: NotebookFocusCoordinator = NotebookFocusCoordinator()
+        focusCoordinator: NotebookFocusCoordinator = NotebookFocusCoordinator(),
+        bodyScrollOffset: Int = 0
     ) {
         self._state = State(wrappedValue: state)
         self._focusedField = FocusState(wrappedValue: focusedField)
         self.viewModel = viewModel
         self.focusCoordinator = focusCoordinator
+        self._bodyScrollOffset = State(wrappedValue: bodyScrollOffset)
     }
 
     mutating func update(action: Action) {
@@ -83,6 +87,8 @@ struct NotebookModel {
             if let effect = viewModel.handleBody(event: event, state: &state) {
                 apply(effect)
             }
+        case .scrollBody(let delta):
+            bodyScrollOffset = max(0, bodyScrollOffset + delta)
         case .quit:
             break
         }
@@ -95,7 +101,8 @@ struct NotebookModel {
             titleBinding: titleBinding,
             bodyBinding: bodyBinding,
             titleFocusBinding: titleFocusBinding,
-            bodyFocusBinding: bodyFocusBinding
+            bodyFocusBinding: bodyFocusBinding,
+            bodyScrollBinding: bodyScrollBinding
         )
     }
 
@@ -106,9 +113,19 @@ struct NotebookModel {
         case .backTab:
             return .focusPrevious
         case .upArrow:
-            return focusedField == .sidebar ? .selectPrevious : nil
+            if focusedField == .sidebar {
+                return .selectPrevious
+            } else if focusedField == .editorBody {
+                return .scrollBody(by: -1)
+            }
+            return nil
         case .downArrow:
-            return focusedField == .sidebar ? .selectNext : nil
+            if focusedField == .sidebar {
+                return .selectNext
+            } else if focusedField == .editorBody {
+                return .scrollBody(by: 1)
+            }
+            return nil
         case .enter:
             if focusedField == .sidebar {
                 return .setFocus(.editorTitle)
@@ -164,5 +181,9 @@ struct NotebookModel {
 
     private var bodyFocusBinding: Binding<Bool> {
         $focusedField.isFocused(.editorBody)
+    }
+
+    private var bodyScrollBinding: Binding<Int> {
+        $bodyScrollOffset
     }
 }

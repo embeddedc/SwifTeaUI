@@ -17,6 +17,9 @@ struct NotebookView: TUIView {
     let bodyBinding: Binding<String>
     let titleFocusBinding: Binding<Bool>
     let bodyFocusBinding: Binding<Bool>
+    let bodyScrollBinding: Binding<Int>
+
+    private let bodyViewport = 10
 
     var body: some TUIView {
         MinimumTerminalSize(columns: minimumColumns, rows: minimumRows) {
@@ -41,10 +44,12 @@ struct NotebookView: TUIView {
                 .focused(titleFocusBinding)
                 .blinkingCursor()
             Text("Body:").foregroundColor(focus == .editorBody ? .cyan : .yellow)
-            TextEditor("Body...", text: bodyBinding, width: editorWidth)
-                .focusRingStyle(textInputFocusStyle)
-                .focused(bodyFocusBinding)
-                .blinkingCursor()
+            ScrollView(viewport: bodyViewport, offset: bodyScrollBinding) {
+                TextEditor("Body...", text: bodyBinding, width: editorWidth)
+                    .focusRingStyle(textInputFocusStyle)
+                    .focused(bodyFocusBinding)
+                    .blinkingCursor()
+            }
             Text("")
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(.green)
             Text("Status: \(state.statusMessage)").foregroundColor(.cyan)
@@ -179,6 +184,7 @@ struct NotebookView: TUIView {
         case .editorBody:
             return [
                 .init("Enter save", color: .cyan),
+                .init("↑/↓ scroll", color: .cyan),
                 .init("Shift+Tab title", color: .cyan),
                 .init("Esc sidebar", color: .cyan)
             ]

@@ -25,6 +25,7 @@ struct NotebookSnapshotTests {
     @Test("Initial layout renders expected snapshot")
     func testInitialLayoutSnapshot() {
         let snapshot = assertSnapshot(
+            label: "initial",
             contains: ANSIColor.cyan.rawValue + ">▌ Welcome to SwifTeaUI" + ANSIColor.reset.rawValue,
             expected: NotebookSnapshotFixtures.initial
         )
@@ -34,6 +35,7 @@ struct NotebookSnapshotTests {
     @Test("Notebook stacks panes when width constrained")
     func testStackedLayoutSnapshot() {
         let snapshot = assertSnapshot(
+            label: "stacked",
             expected: NotebookSnapshotFixtures.stacked,
             size: TerminalSize(columns: 110, rows: 40)
         )
@@ -43,6 +45,7 @@ struct NotebookSnapshotTests {
     @Test("Notebook renders resize prompt when terminal too small")
     func testResizePromptSnapshot() {
         assertSnapshot(
+            label: "resize",
             expected: NotebookSnapshotFixtures.resizePrompt,
             size: TerminalSize(columns: 80, rows: 20)
         )
@@ -51,6 +54,7 @@ struct NotebookSnapshotTests {
     @Test("Title field focus snapshot shows cursor in title")
     func testTitleFieldFocusSnapshot() {
         let snapshot = assertSnapshot(
+            label: "titleFocus",
             mutate: { $0.update(action: .setFocus(.editorTitle)) },
             contains: ANSIColor.cyan.rawValue + "Title:" + ANSIColor.reset.rawValue,
             expected: NotebookSnapshotFixtures.titleFocus
@@ -61,6 +65,7 @@ struct NotebookSnapshotTests {
     @Test("Body field focus snapshot shows cursor in body")
     func testBodyFieldFocusSnapshot() {
         let snapshot = assertSnapshot(
+            label: "bodyFocus",
             mutate: { $0.update(action: .setFocus(.editorBody)) },
             contains: ANSIColor.cyan.rawValue + "Body:" + ANSIColor.reset.rawValue,
             expected: NotebookSnapshotFixtures.bodyFocus
@@ -71,6 +76,7 @@ struct NotebookSnapshotTests {
     @Test("Sidebar selection snapshot highlights second note")
     func testSidebarSelectionSnapshot() {
         let snapshot = assertSnapshot(
+            label: "secondNote",
             mutate: { $0.update(action: .selectNext) },
             contains: ANSIColor.cyan.rawValue + ">▌ Keyboard Shortcuts Overview" + ANSIColor.reset.rawValue,
             expected: NotebookSnapshotFixtures.secondNote
@@ -158,6 +164,7 @@ private extension String {
 
 @discardableResult
 private func assertSnapshot(
+    label: String,
     mutate: (inout NotebookScene) -> Void = { _ in },
     contains substring: String? = nil,
     expected expectedSnapshot: String,
@@ -170,16 +177,16 @@ private func assertSnapshot(
         app,
         size: overrideSize ?? defaultSnapshotSize
     )
-    if let substring {
-        #expect(snapshot.contains(substring))
-    }
-
     let processed = snapshot
         .strippingANSI()
         .removingTrailingSpacesPerLine()
 
     let expectedProcessed = expectedSnapshot
         .removingTrailingSpacesPerLine()
+
+    if let substring {
+        #expect(snapshot.contains(substring))
+    }
 
     #expect(processed == expectedProcessed)
     return snapshot
@@ -204,6 +211,13 @@ SwifTea Notebook
 │                                    Use Tab to focus fields on the right, Shift+Tab to return                         │
 │                                    here. This long introduction should stay visible even when                        │
 │                                    the bottom of the screen is busy.                                                 │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
@@ -239,6 +253,13 @@ SwifTea Notebook
 │                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
 │                                    Saved note: Welcome to SwifTeaUI                                                  │
 │                                                                                                                      │
 │                                    Status: Tab to edit the welcome note and confirm longer content renders cleanly.  │
@@ -271,6 +292,13 @@ SwifTea Notebook
 │                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
 │                                    Saved note: Welcome to SwifTeaUI                                                  │
 │                                                                                                                      │
 │                                    Status: Tab to edit the welcome note and confirm longer content renders cleanly.  │
@@ -279,7 +307,7 @@ SwifTea Notebook
 
 
 
-Focus: editor.body  Enter save  Shift+Tab title  Esc sidebar
+Focus: editor.body  Enter save  ↑/↓ scroll  Shift+Tab title  Esc sidebar
 """
 
     static let secondNote = """
@@ -300,6 +328,13 @@ SwifTea Notebook
 │                                    ↑/↓ move between notes when the sidebar is focused. Enter                         │
 │                                    while editing the body saves. Longer descriptions ensure we                       │
 │                                    validate vertical layout spacing.                                                 │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
 │                                                                                                                      │
@@ -355,6 +390,13 @@ SwifTea Notebook
 │  Use Tab to focus fields on the right, Shift+Tab to return here. This              │
 │  long introduction should stay visible even when the bottom of the                 │
 │  screen is busy.                                                                   │
+│                                                                                    │
+│                                                                                    │
+│                                                                                    │
+│                                                                                    │
+│                                                                                    │
+│                                                                                    │
+│                                                                                    │
 │                                                                                    │
 │                                                                                    │
 │                                                                                    │
