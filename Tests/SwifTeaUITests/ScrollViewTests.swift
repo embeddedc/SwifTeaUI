@@ -35,4 +35,38 @@ struct ScrollViewTests {
         let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         #expect(lines == ["Only one line", "", "", ""])
     }
+
+    @Test("Pinned ScrollView stays at bottom when content grows")
+    func testPinnedFollowsBottom() {
+        var offset = 0
+        var pinned = true
+        var length = 0
+
+        let offsetBinding = Binding(
+            get: { offset },
+            set: { offset = $0 }
+        )
+        let pinnedBinding = Binding(
+            get: { pinned },
+            set: { pinned = $0 }
+        )
+        let lengthBinding = Binding(
+            get: { length },
+            set: { length = $0 }
+        )
+
+        let view = ScrollView(
+            viewport: 2,
+            offset: offsetBinding,
+            pinnedToBottom: pinnedBinding,
+            contentLength: lengthBinding
+        ) {
+            Text("1\n2\n3\n4")
+        }
+
+        let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        #expect(lines == ["3", "4"])
+        #expect(offset == 2)
+        #expect(length == 4)
+    }
 }

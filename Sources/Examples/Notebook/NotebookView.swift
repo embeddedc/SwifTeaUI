@@ -18,8 +18,10 @@ struct NotebookView: TUIView {
     let titleFocusBinding: Binding<Bool>
     let bodyFocusBinding: Binding<Bool>
     let bodyScrollBinding: Binding<Int>
+    let bodyPinnedBinding: Binding<Bool>
+    let bodyContentHeightBinding: Binding<Int>
 
-    private let bodyViewport = 10
+    private let bodyViewport = NotebookModel.bodyViewport
 
     var body: some TUIView {
         MinimumTerminalSize(columns: minimumColumns, rows: minimumRows) {
@@ -44,7 +46,12 @@ struct NotebookView: TUIView {
                 .focused(titleFocusBinding)
                 .blinkingCursor()
             Text("Body:").foregroundColor(focus == .editorBody ? .cyan : .yellow)
-            ScrollView(viewport: bodyViewport, offset: bodyScrollBinding) {
+            ScrollView(
+                viewport: bodyViewport,
+                offset: bodyScrollBinding,
+                pinnedToBottom: bodyPinnedBinding,
+                contentLength: bodyContentHeightBinding
+            ) {
                 TextEditor("Body...", text: bodyBinding, width: editorWidth)
                     .focusRingStyle(textInputFocusStyle)
                     .focused(bodyFocusBinding)

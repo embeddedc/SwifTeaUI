@@ -47,32 +47,44 @@ struct NotebookModel {
         case quit
     }
 
+    static let bodyViewport = 10
+
     @State private var state: NotebookState
     private let viewModel: NotebookViewModel
     private let focusCoordinator: NotebookFocusCoordinator
     @FocusState private var focusedField: NotebookFocusField?
     @State private var bodyScrollOffset: Int
+    @State private var bodyContentHeight: Int
+    @State private var isBodyPinnedToBottom: Bool
 
     init(
         state: NotebookState = NotebookState(),
         focusedField: NotebookFocusField? = .sidebar,
         viewModel: NotebookViewModel = NotebookViewModel(),
         focusCoordinator: NotebookFocusCoordinator = NotebookFocusCoordinator(),
-        bodyScrollOffset: Int = 0
+        bodyScrollOffset: Int = 0,
+        bodyContentHeight: Int = 0,
+        isBodyPinnedToBottom: Bool = true
     ) {
         self._state = State(wrappedValue: state)
         self._focusedField = FocusState(wrappedValue: focusedField)
         self.viewModel = viewModel
         self.focusCoordinator = focusCoordinator
         self._bodyScrollOffset = State(wrappedValue: bodyScrollOffset)
+        self._bodyContentHeight = State(wrappedValue: bodyContentHeight)
+        self._isBodyPinnedToBottom = State(wrappedValue: isBodyPinnedToBottom)
     }
 
     mutating func update(action: Action) {
         switch action {
         case .selectNext:
             viewModel.selectNext(state: &state)
+            bodyScrollOffset = 0
+            isBodyPinnedToBottom = true
         case .selectPrevious:
             viewModel.selectPrevious(state: &state)
+            bodyScrollOffset = 0
+            isBodyPinnedToBottom = true
         case .focusNext:
             focusCoordinator.focusNext(current: &focusedField)
         case .focusPrevious:
@@ -87,8 +99,16 @@ struct NotebookModel {
             if let effect = viewModel.handleBody(event: event, state: &state) {
                 apply(effect)
             }
+            isBodyPinnedToBottom = true
         case .scrollBody(let delta):
-            bodyScrollOffset = max(0, bodyScrollOffset + delta)
+            isBodyPinnedToBottom = false
+            let maxOffset = bodyMaxOffset
+            let desired = bodyScrollOffset + delta
+            let clamped = max(0, min(desired, maxOffset))
+            bodyScrollOffset = clamped
+            if clamped >= maxOffset {
+                isBodyPinnedToBottom = true
+            }
         case .quit:
             break
         }
@@ -102,7 +122,9 @@ struct NotebookModel {
             bodyBinding: bodyBinding,
             titleFocusBinding: titleFocusBinding,
             bodyFocusBinding: bodyFocusBinding,
-            bodyScrollBinding: bodyScrollBinding
+            bodyScrollBinding: bodyScrollBinding,
+            bodyPinnedBinding: bodyPinnedBinding,
+            bodyContentHeightBinding: bodyContentHeightBinding
         )
     }
 
@@ -185,5 +207,17 @@ struct NotebookModel {
 
     private var bodyScrollBinding: Binding<Int> {
         $bodyScrollOffset
+    }
+
+    private var bodyPinnedBinding: Binding<Bool> {
+        $isBodyPinnedToBottom
+    }
+
+    private var bodyContentHeightBinding: Binding<Int> {
+        $bodyContentHeight
+    }
+
+    private var bodyMaxOffset: Int {
+        max(0, bodyContentHeight - NotebookModel.bodyViewport)
     }
 }

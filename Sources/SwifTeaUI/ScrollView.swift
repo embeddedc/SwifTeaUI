@@ -10,17 +10,23 @@ public struct ScrollView<Content: TUIView>: TUIView {
     private let axis: Axis
     private let viewport: Int
     private let offset: Binding<Int>
+    private let pinnedToBottom: Binding<Bool>?
+    private let contentLength: Binding<Int>?
     private let content: Content
 
     public init(
         _ axis: Axis = .vertical,
         viewport: Int,
         offset: Binding<Int>,
+        pinnedToBottom: Binding<Bool>? = nil,
+        contentLength: Binding<Int>? = nil,
         content: () -> Content
     ) {
         self.axis = axis
         self.viewport = max(1, viewport)
         self.offset = offset
+        self.pinnedToBottom = pinnedToBottom
+        self.contentLength = contentLength
         self.content = content()
     }
 
@@ -41,12 +47,23 @@ public struct ScrollView<Content: TUIView>: TUIView {
             lines = [""]
         }
 
-        let clampedOffset = clampOffset(linesCount: lines.count)
+        contentLength?.wrappedValue = lines.count
+        let maxOffset = max(0, lines.count - viewport)
+
+        var resolvedOffset = clamp(offset: offset.wrappedValue, max: maxOffset)
+        if pinnedToBottom?.wrappedValue == true {
+            resolvedOffset = maxOffset
+        }
+
+        if offset.wrappedValue != resolvedOffset {
+            offset.wrappedValue = resolvedOffset
+        }
+
         var visible: [String] = []
         visible.reserveCapacity(viewport)
 
         for index in 0..<viewport {
-            let source = clampedOffset + index
+            let source = resolvedOffset + index
             if source < lines.count {
                 visible.append(lines[source])
             } else {
@@ -57,17 +74,9 @@ public struct ScrollView<Content: TUIView>: TUIView {
         return visible.joined(separator: "\n")
     }
 
-    private func clampOffset(linesCount: Int) -> Int {
-        let maxOffset = max(0, linesCount - viewport)
-        var current = offset.wrappedValue
-        if current < 0 {
-            current = 0
-        } else if current > maxOffset {
-            current = maxOffset
-        }
-        if current != offset.wrappedValue {
-            offset.wrappedValue = current
-        }
-        return current
+    private func clamp(offset value: Int, max: Int) -> Int {
+        if value < 0 { return 0 }
+        if value > max { return max }
+        return value
     }
 }
