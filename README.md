@@ -151,6 +151,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 - `VStack` and `HStack` accept `spacing` and alignment arguments that mirror SwiftUI. Need a fixed height? Call `.frame(height:alignment:)` on the stack rather than passing a custom parameter.
 - Call `.padding(_:)` on any view to inset the rendered output with ANSI-aware spacing.
+- Wrap any view in `.foregroundColor(_:)` or `.backgroundColor(_:)` to tint entire containers (Stacks, Borders, custom composites) with ANSI colors without re-styling each child manually.
 - `ScrollView(axis:viewport:offset:)` clamps tall content (vertical) or wide buffers (horizontal) without re-rendering children. Bind `contentLength` to capture the total rows or columns, call `.followingActiveLine(_:)` (optionally with an enable binding) to auto-scroll caret positions, flip on `.scrollIndicators(.automatic)` for arrow chrome when content overflows, and use `.scrollDisabled(true)` whenever reducers need to freeze scroll state manually.
 - `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.
