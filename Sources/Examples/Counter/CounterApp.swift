@@ -39,109 +39,35 @@ struct CounterModel {
         case increment
         case decrement
         case quit
-        case editTitle(TextFieldEvent)
-        case editBody(TextFieldEvent)
-        case focusNext
-        case focusPrevious
-        case toggleTheme
-    }
-
-    enum ThemeSelection: CaseIterable {
-        case bubbleTeaDark
-        case bubbleTeaLight
-
-        var theme: SwifTeaTheme {
-            switch self {
-            case .bubbleTeaDark:
-                return .bubbleTeaDark
-            case .bubbleTeaLight:
-                return .bubbleTeaLight
-            }
-        }
     }
 
     @State private var state: CounterState
-    private let viewModel: CounterViewModel
-    private let focusCoordinator: CounterFocusCoordinator
-    @FocusState private var focusedField: CounterFocusField?
-    @State private var themeSelection: ThemeSelection
 
     init(
-        state: CounterState = CounterState(),
-        focusedField: CounterFocusField? = .controls,
-        viewModel: CounterViewModel = CounterViewModel(),
-        focusCoordinator: CounterFocusCoordinator = CounterFocusCoordinator(),
-        themeSelection: ThemeSelection = .bubbleTeaDark
+        state: CounterState = CounterState()
     ) {
         self._state = State(wrappedValue: state)
-        self._focusedField = FocusState(wrappedValue: focusedField)
-        self._themeSelection = State(wrappedValue: themeSelection)
-        self.viewModel = viewModel
-        self.focusCoordinator = focusCoordinator
     }
 
     mutating func update(action: Action) {
         switch action {
         case .increment:
-            viewModel.increment(state: &state)
+            state.count += 1
         case .decrement:
-            viewModel.decrement(state: &state)
-        case .editTitle(let event):
-            if let effect = viewModel.handleTitle(event: event, state: &state) {
-                apply(effect)
-            }
-        case .editBody(let event):
-            if let effect = viewModel.handleBody(event: event, state: &state) {
-                apply(effect)
-            }
-        case .focusNext:
-            focusCoordinator.focusNext(current: &focusedField)
-        case .focusPrevious:
-            focusCoordinator.focusPrevious(current: &focusedField)
+            state.count -= 1
         case .quit:
             break
-        case .toggleTheme:
-            cycleTheme()
         }
     }
 
     func makeView() -> some TUIView {
-        CounterView(
-            state: state,
-            focus: focusedField,
-            titleBinding: titleBinding,
-            bodyBinding: bodyBinding,
-            titleFocusBinding: titleFocusBinding,
-            bodyFocusBinding: bodyFocusBinding,
-            theme: themeSelection.theme
-        )
+        CounterView(count: state.count)
     }
 
     func mapKeyToAction(_ key: KeyEvent) -> Action? {
         switch key {
-        case .tab:
-            return .focusNext
-        case .backTab:
-            return .focusPrevious
-        default:
-            break
-        }
-
-        if let textEvent = textFieldEvent(from: key) {
-            switch focusedField {
-            case .noteTitle:
-                return .editTitle(textEvent)
-            case .noteBody:
-                return .editBody(textEvent)
-            default:
-                break
-            }
-        }
-
-        switch key {
         case .char("u"), .rightArrow: return .increment
         case .char("d"), .leftArrow:  return .decrement
-        case .char("t"), .char("T"): return .toggleTheme
         case .char("q"), .ctrlC, .escape: return .quit
         default: return nil
         }
@@ -150,35 +76,5 @@ struct CounterModel {
     func shouldExit(for action: Action) -> Bool {
         if case .quit = action { return true }
         return false
-    }
-
-    private mutating func apply(_ effect: CounterViewModel.Effect) {
-        switch effect {
-        case .focus(let field):
-            focusedField = field
-        }
-    }
-
-    private var titleBinding: Binding<String> {
-        $state.map(\.noteTitle)
-    }
-
-    private var bodyBinding: Binding<String> {
-        $state.map(\.noteBody)
-    }
-
-    private var titleFocusBinding: Binding<Bool> {
-        $focusedField.isFocused(.noteTitle)
-    }
-
-    private var bodyFocusBinding: Binding<Bool> {
-        $focusedField.isFocused(.noteBody)
-    }
-
-    private mutating func cycleTheme() {
-        let all = ThemeSelection.allCases
-        guard let index = all.firstIndex(of: themeSelection) else { return }
-        let next = all[(index + 1) % all.count]
-        themeSelection = next
     }
 }
