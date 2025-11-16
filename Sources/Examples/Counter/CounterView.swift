@@ -19,6 +19,7 @@ struct CounterView: TUIView {
                     Text("[Tab] move focus forward | [Shift+Tab] move back").foregroundColor(.yellow)
                 }
                 .padding(1)
+                .backgroundColor(.cyan)
 
                 VStack(spacing: 1, alignment: .leading) {
                     Text("Note title:").foregroundColor(focus == .noteTitle ? .cyan : .yellow)
@@ -35,6 +36,7 @@ struct CounterView: TUIView {
                     Text("Focus: \(focusDescription)").foregroundColor(.yellow)
                 }
                 .padding(1)
+                .backgroundColor(.green)
             }
         } fallback: { size in
             VStack(spacing: 1, alignment: .leading) {
