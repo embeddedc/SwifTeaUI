@@ -146,6 +146,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 - `swift run SwifTeaNotebookExample` demonstrates two panes with scoped focus rings, arrow-key navigation, and text entry across multiple fields.
 - `swift run SwifTeaTaskRunnerExample` simulates a task queue, showcasing the spinner view inline and in the status bar for live progress feedback.
 - `swift run SwifTeaPackageListExample` renders a Mint-inspired dashboard that uses the new `Table` view plus a status bar to highlight outdated packages.
+- `swift run SwifTeaColorDemoExample` paints a single foreground/background text sample inside a border so you can inspect color resets and padding behavior while iterating on ANSI rendering.
 
 ### Layout Primitives
 
