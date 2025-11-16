@@ -18,8 +18,10 @@ struct NotebookView: TUIView {
     let titleFocusBinding: Binding<Bool>
     let bodyFocusBinding: Binding<Bool>
     let bodyScrollBinding: Binding<Int>
-    let bodyPinnedBinding: Binding<Bool>
     let bodyContentHeightBinding: Binding<Int>
+    let bodyCursorBinding: Binding<Int>
+    let bodyCursorLineBinding: Binding<Int>
+    let followCursorBinding: Binding<Bool>
 
     private let bodyViewport = NotebookModel.bodyViewport
 
@@ -49,13 +51,16 @@ struct NotebookView: TUIView {
             ScrollView(
                 viewport: bodyViewport,
                 offset: bodyScrollBinding,
-                pinnedToBottom: bodyPinnedBinding,
-                contentLength: bodyContentHeightBinding
+                contentLength: bodyContentHeightBinding,
+                activeLine: bodyCursorLineBinding,
+                followActiveLine: followCursorBinding
             ) {
                 TextEditor("Body...", text: bodyBinding, width: editorWidth)
                     .focusRingStyle(textInputFocusStyle)
                     .focused(bodyFocusBinding)
                     .blinkingCursor()
+                    .cursorPosition(bodyCursorBinding)
+                    .cursorLine(bodyCursorLineBinding)
             }
             Text("")
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(.green)
@@ -192,6 +197,7 @@ struct NotebookView: TUIView {
             return [
                 .init("Enter save", color: .cyan),
                 .init("↑/↓ scroll", color: .cyan),
+                .init("←/→ move", color: .cyan),
                 .init("Shift+Tab title", color: .cyan),
                 .init("Esc sidebar", color: .cyan)
             ]

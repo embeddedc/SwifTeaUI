@@ -11,6 +11,8 @@ public struct TextEditor: TUIView {
     private let text: Binding<String>
     private let focus: Binding<Bool>?
     private let cursorSymbol: String
+    private let cursorPositionBinding: Binding<Int>?
+    private let cursorLineBinding: Binding<Int>?
     private let wrapWidth: Int
     private let focusStyle: FocusStyle
     private let blinkingCursor: Bool
@@ -20,14 +22,18 @@ public struct TextEditor: TUIView {
         text: Binding<String>,
         focus: Binding<Bool>? = nil,
         width: Int = 60,
-        cursor: String = "|",
+        cursorSymbol: String = "|",
         focusStyle: FocusStyle = .default,
-        blinkingCursor: Bool = false
+        blinkingCursor: Bool = false,
+        cursorPosition: Binding<Int>? = nil,
+        cursorLine: Binding<Int>? = nil
     ) {
         self.placeholder = placeholder
         self.text = text
         self.focus = focus
-        self.cursorSymbol = cursor
+        self.cursorSymbol = cursorSymbol
+        self.cursorPositionBinding = cursorPosition
+        self.cursorLineBinding = cursorLine
         self.wrapWidth = max(1, width)
         self.focusStyle = focusStyle
         self.blinkingCursor = blinkingCursor
@@ -36,22 +42,47 @@ public struct TextEditor: TUIView {
     public func render() -> String {
         let value = text.wrappedValue
         let isFocused = focus?.wrappedValue ?? true
-        let display = value.isEmpty ? placeholder : value
-        var lines = wrap(display, width: wrapWidth)
+        let sentinel = "\u{0000}"
 
-        if isFocused {
-            let cursor = blinkingCursor
-                ? CursorBlinker.shared.cursor(for: cursorSymbol)
-                : cursorSymbol
-            if lines.isEmpty {
-                lines = [cursor]
-            } else {
-                lines[lines.count - 1] += cursor
-            }
-            lines[lines.count - 1] = focusStyle.apply(to: lines.last ?? "")
+        var cursorIndex = cursorPositionBinding?.wrappedValue ?? value.count
+        cursorIndex = max(0, min(cursorIndex, value.count))
+        if let cursorPositionBinding, cursorPositionBinding.wrappedValue != cursorIndex {
+            cursorPositionBinding.wrappedValue = cursorIndex
         }
 
+        var renderText = value.isEmpty ? placeholder : value
+        let insertionIndex = renderText == value
+            ? min(cursorIndex, renderText.count)
+            : min(cursorIndex, renderText.count)
+        let index = renderText.index(renderText.startIndex, offsetBy: insertionIndex)
+        renderText.insert(contentsOf: sentinel, at: index)
+
+        var lines = wrap(renderText, width: wrapWidth)
+
         let targetWidth = wrapWidth + 1
+        let cursorDisplay = blinkingCursor
+            ? CursorBlinker.shared.cursor(for: cursorSymbol)
+            : cursorSymbol
+
+        var detectedCursorLine: Int?
+
+        for lineIndex in lines.indices {
+            if let range = lines[lineIndex].range(of: sentinel) {
+                detectedCursorLine = lineIndex
+                if isFocused {
+                    lines[lineIndex].replaceSubrange(range, with: cursorDisplay)
+                    lines[lineIndex] = focusStyle.apply(to: lines[lineIndex])
+                } else {
+                    lines[lineIndex].removeSubrange(range)
+                }
+                break
+            }
+        }
+
+        if let cursorLineBinding {
+            cursorLineBinding.wrappedValue = detectedCursorLine ?? 0
+        }
+
         let paddedLines = lines.map { line -> String in
             let visible = HStack.visibleWidth(of: line)
             if visible >= targetWidth { return line }
@@ -135,9 +166,11 @@ public struct TextEditor: TUIView {
             text: text,
             focus: focus,
             width: wrapWidth,
-            cursor: cursorSymbol,
+            cursorSymbol: cursorSymbol,
             focusStyle: style,
-            blinkingCursor: blinkingCursor
+            blinkingCursor: blinkingCursor,
+            cursorPosition: cursorPositionBinding,
+            cursorLine: cursorLineBinding
         )
     }
 
@@ -152,9 +185,11 @@ public struct TextEditor: TUIView {
             text: text,
             focus: focus,
             width: wrapWidth,
-            cursor: cursorSymbol,
+            cursorSymbol: cursorSymbol,
             focusStyle: focusStyle,
-            blinkingCursor: enabled
+            blinkingCursor: enabled,
+            cursorPosition: cursorPositionBinding,
+            cursorLine: cursorLineBinding
         )
     }
 
@@ -164,9 +199,39 @@ public struct TextEditor: TUIView {
             text: text,
             focus: binding,
             width: wrapWidth,
-            cursor: cursorSymbol,
+            cursorSymbol: cursorSymbol,
             focusStyle: focusStyle,
-            blinkingCursor: blinkingCursor
+            blinkingCursor: blinkingCursor,
+            cursorPosition: cursorPositionBinding,
+            cursorLine: cursorLineBinding
+        )
+    }
+
+    public func cursorPosition(_ binding: Binding<Int>) -> TextEditor {
+        TextEditor(
+            placeholder,
+            text: text,
+            focus: focus,
+            width: wrapWidth,
+            cursorSymbol: cursorSymbol,
+            focusStyle: focusStyle,
+            blinkingCursor: blinkingCursor,
+            cursorPosition: binding,
+            cursorLine: cursorLineBinding
+        )
+    }
+
+    public func cursorLine(_ binding: Binding<Int>) -> TextEditor {
+        TextEditor(
+            placeholder,
+            text: text,
+            focus: focus,
+            width: wrapWidth,
+            cursorSymbol: cursorSymbol,
+            focusStyle: focusStyle,
+            blinkingCursor: blinkingCursor,
+            cursorPosition: cursorPositionBinding,
+            cursorLine: binding
         )
     }
 }

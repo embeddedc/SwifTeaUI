@@ -44,6 +44,7 @@ struct NotebookModel {
         case editTitle(TextFieldEvent)
         case editBody(TextFieldEvent)
         case scrollBody(by: Int)
+        case moveBodyCursor(Int)
         case quit
     }
 
@@ -55,7 +56,8 @@ struct NotebookModel {
     @FocusState private var focusedField: NotebookFocusField?
     @State private var bodyScrollOffset: Int
     @State private var bodyContentHeight: Int
-    @State private var isBodyPinnedToBottom: Bool
+    @State private var bodyCursorLine: Int
+    @State private var followCursor: Bool
 
     init(
         state: NotebookState = NotebookState(),
@@ -64,7 +66,8 @@ struct NotebookModel {
         focusCoordinator: NotebookFocusCoordinator = NotebookFocusCoordinator(),
         bodyScrollOffset: Int = 0,
         bodyContentHeight: Int = 0,
-        isBodyPinnedToBottom: Bool = true
+        bodyCursorLine: Int = 0,
+        followCursor: Bool = true
     ) {
         self._state = State(wrappedValue: state)
         self._focusedField = FocusState(wrappedValue: focusedField)
@@ -72,7 +75,8 @@ struct NotebookModel {
         self.focusCoordinator = focusCoordinator
         self._bodyScrollOffset = State(wrappedValue: bodyScrollOffset)
         self._bodyContentHeight = State(wrappedValue: bodyContentHeight)
-        self._isBodyPinnedToBottom = State(wrappedValue: isBodyPinnedToBottom)
+        self._bodyCursorLine = State(wrappedValue: bodyCursorLine)
+        self._followCursor = State(wrappedValue: followCursor)
     }
 
     mutating func update(action: Action) {
@@ -80,17 +84,20 @@ struct NotebookModel {
         case .selectNext:
             viewModel.selectNext(state: &state)
             bodyScrollOffset = 0
-            isBodyPinnedToBottom = true
+            followCursor = true
         case .selectPrevious:
             viewModel.selectPrevious(state: &state)
             bodyScrollOffset = 0
-            isBodyPinnedToBottom = true
+            followCursor = true
         case .focusNext:
             focusCoordinator.focusNext(current: &focusedField)
         case .focusPrevious:
             focusCoordinator.focusPrevious(current: &focusedField)
         case .setFocus(let target):
             focusedField = target
+            if target == .editorBody {
+                followCursor = true
+            }
         case .editTitle(let event):
             if let effect = viewModel.handleTitle(event: event, state: &state) {
                 apply(effect)
@@ -99,16 +106,16 @@ struct NotebookModel {
             if let effect = viewModel.handleBody(event: event, state: &state) {
                 apply(effect)
             }
-            isBodyPinnedToBottom = true
+            followCursor = true
         case .scrollBody(let delta):
-            isBodyPinnedToBottom = false
+            followCursor = false
             let maxOffset = bodyMaxOffset
             let desired = bodyScrollOffset + delta
             let clamped = max(0, min(desired, maxOffset))
             bodyScrollOffset = clamped
-            if clamped >= maxOffset {
-                isBodyPinnedToBottom = true
-            }
+        case .moveBodyCursor(let delta):
+            moveCursor(by: delta)
+            followCursor = true
         case .quit:
             break
         }
@@ -123,8 +130,10 @@ struct NotebookModel {
             titleFocusBinding: titleFocusBinding,
             bodyFocusBinding: bodyFocusBinding,
             bodyScrollBinding: bodyScrollBinding,
-            bodyPinnedBinding: bodyPinnedBinding,
-            bodyContentHeightBinding: bodyContentHeightBinding
+            bodyContentHeightBinding: bodyContentHeightBinding,
+            bodyCursorBinding: bodyCursorBinding,
+            bodyCursorLineBinding: bodyCursorLineBinding,
+            followCursorBinding: followCursorBinding
         )
     }
 
@@ -146,6 +155,16 @@ struct NotebookModel {
                 return .selectNext
             } else if focusedField == .editorBody {
                 return .scrollBody(by: 1)
+            }
+            return nil
+        case .leftArrow:
+            if focusedField == .editorBody {
+                return .moveBodyCursor(-1)
+            }
+            return nil
+        case .rightArrow:
+            if focusedField == .editorBody {
+                return .moveBodyCursor(1)
             }
             return nil
         case .enter:
@@ -186,6 +205,9 @@ struct NotebookModel {
         switch effect {
         case .focus(let field):
             focusedField = field
+            if field == .editorBody {
+                followCursor = true
+            }
         }
     }
 
@@ -209,15 +231,18 @@ struct NotebookModel {
         $bodyScrollOffset
     }
 
-    private var bodyPinnedBinding: Binding<Bool> {
-        $isBodyPinnedToBottom
-    }
-
-    private var bodyContentHeightBinding: Binding<Int> {
-        $bodyContentHeight
-    }
+    private var bodyContentHeightBinding: Binding<Int> { $bodyContentHeight }
+    private var bodyCursorBinding: Binding<Int> { $state.map(\.editorBodyCursor) }
+    private var bodyCursorLineBinding: Binding<Int> { $bodyCursorLine }
+    private var followCursorBinding: Binding<Bool> { $followCursor }
 
     private var bodyMaxOffset: Int {
         max(0, bodyContentHeight - NotebookModel.bodyViewport)
+    }
+
+    private mutating func moveCursor(by delta: Int) {
+        let current = state.editorBodyCursor
+        let newValue = max(0, min(current + delta, state.editorBody.count))
+        state.editorBodyCursor = newValue
     }
 }

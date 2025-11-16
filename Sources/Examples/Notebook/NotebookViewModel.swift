@@ -40,15 +40,13 @@ struct NotebookViewModel {
     func handleBody(event: TextFieldEvent, state: inout NotebookState) -> Effect? {
         switch event {
         case .insert(let character):
-            state.editorBody.append(character)
+            insertCharacter(character, in: &state)
             syncBody(into: &state)
             return nil
 
         case .backspace:
-            if !state.editorBody.isEmpty {
-                state.editorBody.removeLast()
-                syncBody(into: &state)
-            }
+            removeCharacter(in: &state)
+            syncBody(into: &state)
             return nil
 
         case .submit:
@@ -65,6 +63,7 @@ struct NotebookViewModel {
         let note = state.notes[state.selectedIndex]
         state.editorTitle = note.title
         state.editorBody = note.body
+        state.editorBodyCursor = note.body.count
     }
 
     private func syncTitle(into state: inout NotebookState) {
@@ -75,6 +74,25 @@ struct NotebookViewModel {
     private func syncBody(into state: inout NotebookState) {
         guard state.notes.indices.contains(state.selectedIndex) else { return }
         state.notes[state.selectedIndex].body = state.editorBody
+    }
+
+    private func insertCharacter(_ character: Character, in state: inout NotebookState) {
+        let cursor = clampCursor(state.editorBodyCursor, within: state.editorBody)
+        let index = state.editorBody.index(state.editorBody.startIndex, offsetBy: cursor)
+        state.editorBody.insert(character, at: index)
+        state.editorBodyCursor = cursor + 1
+    }
+
+    private func removeCharacter(in state: inout NotebookState) {
+        let cursor = clampCursor(state.editorBodyCursor, within: state.editorBody)
+        guard cursor > 0 else { return }
+        let removalIndex = state.editorBody.index(state.editorBody.startIndex, offsetBy: cursor - 1)
+        state.editorBody.remove(at: removalIndex)
+        state.editorBodyCursor = cursor - 1
+    }
+
+    private func clampCursor(_ cursor: Int, within text: String) -> Int {
+        max(0, min(cursor, text.count))
     }
 
     private static let timestampFormatter: DateFormatter = {

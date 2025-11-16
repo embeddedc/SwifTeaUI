@@ -54,6 +54,21 @@ struct NotebookAppTests {
 
         #expect(afterWidth == baselineWidth)
     }
+
+    @Test("Arrow keys move the body cursor within the editor")
+    func testBodyCursorMovement() {
+        var app = NotebookScene()
+        app.update(action: .setFocus(.editorBody))
+
+        if let moveLeft = app.mapKeyToAction(.leftArrow) {
+            app.update(action: moveLeft)
+        } else {
+            Issue.record("Expected left arrow to move the body cursor")
+        }
+
+        let rendered = renderNotebook(app).strippingANSI()
+        #expect(rendered.contains("busy|."))
+    }
 }
 
 private extension String {

@@ -165,7 +165,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 - Builders: `@TUIBuilder` now supports `if`/`if let`/`switch`/loops via `buildOptional`, `buildEither`, and `buildArray`, plus `Group { ... }` and `ForEach(data,id:)` for conditional & data-driven repetition just like `@ViewBuilder`.
 - Text: `Text.foregroundColor(_:)` and `Text.bold()` match SwiftUI naming; the old `.foreground`/`.bolded()` methods remain as deprecated shims.
-- Inputs: `TextEditor` is the multiline field (with `typealias TextArea` for back-compat). Both `TextField` and `TextEditor` support `.focused(_:)`, `.focusRingStyle(_:)`, `.foregroundColor(_:)`, and `.blinkingCursor()`.
+- Inputs: `TextEditor` is the multiline field (with `typealias TextArea` for back-compat). Both `TextField` and `TextEditor` support `.focused(_:)`, `.focusRingStyle(_:)`, `.foregroundColor(_:)`, and `.blinkingCursor()`, and `TextEditor` exposes `.cursorPosition(_:)` / `.cursorLine(_:)` so reducers can drive caret placement while scroll views keep the caret visible.
 - Focus: `.focused(_:)` mirrors SwiftUI’s modifier, while focus ring visuals come from `.focusRingStyle(_:)` and `FocusRingBorder`.
 
 ### Feedback Widgets

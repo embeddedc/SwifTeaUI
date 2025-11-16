@@ -27,6 +27,33 @@ private extension String {
 
         return result
     }
+
+    @Test("Text editor reports cursor line index")
+    func testTextEditorReportsCursorLine() {
+        final class EditorHarness {
+            @State var text = "Hello\nWorld"
+            var textBinding: Binding<String> { $text }
+        }
+
+        let harness = EditorHarness()
+        var cursorPosition = 7 // inside second line
+        var cursorLine = -1
+
+        let positionBinding = Binding<Int>(
+            get: { cursorPosition },
+            set: { cursorPosition = $0 }
+        )
+        let lineBinding = Binding<Int>(
+            get: { cursorLine },
+            set: { cursorLine = $0 }
+        )
+
+        let editor = TextEditor(text: harness.textBinding, cursorPosition: positionBinding)
+            .cursorLine(lineBinding)
+
+        _ = editor.render()
+        #expect(cursorLine == 2)
+    }
 }
 
 struct TextFieldTests {
@@ -88,6 +115,26 @@ struct TextFieldTests {
 
         isFocused = true
         #expect(field.render().strippingANSI() == "Placeholder|")
+    }
+
+    @Test("Text editor renders cursor within the line when cursor binding provided")
+    func testTextEditorCursorPosition() {
+        final class EditorHarness {
+            @State var text = "Hello"
+            var textBinding: Binding<String> { $text }
+        }
+
+        let harness = EditorHarness()
+        var cursorPosition = 2
+        let cursorBinding = Binding<Int>(
+            get: { cursorPosition },
+            set: { cursorPosition = $0 }
+        )
+
+        let editor = TextEditor(text: harness.textBinding, cursorPosition: cursorBinding)
+        let rendered = editor.render().strippingANSI()
+        #expect(rendered.contains("He|llo"))
+        #expect(cursorPosition == 2)
     }
 
     @Test("Key events map to text field events")

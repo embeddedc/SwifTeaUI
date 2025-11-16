@@ -8,6 +8,7 @@ struct NotebookState {
     var selectedIndex: Int
     var editorTitle: String
     var editorBody: String
+    var editorBodyCursor: Int
     var statusMessage: String
 
     init() {
@@ -28,6 +29,7 @@ struct NotebookState {
         self.selectedIndex = 0
         self.editorTitle = notes[0].title
         self.editorBody = notes[0].body
+        self.editorBodyCursor = notes[0].body.count
         self.statusMessage = "Tab to edit the welcome note and confirm longer content renders cleanly."
     }
 }

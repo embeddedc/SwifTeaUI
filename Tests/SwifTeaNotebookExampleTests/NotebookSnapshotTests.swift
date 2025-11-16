@@ -307,7 +307,7 @@ SwifTea Notebook
 
 
 
-Focus: editor.body  Enter save  ↑/↓ scroll  Shift+Tab title  Esc sidebar
+Focus: editor.body  Enter save  ↑/↓ scroll  ←/→ move  Shift+Tab title  Esc sidebar
 """
 
     static let secondNote = """
