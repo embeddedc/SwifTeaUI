@@ -61,22 +61,58 @@ struct BorderTests {
         #expect(border.render() == expected)
     }
 
-    @Test("Border background color wraps the rendered output")
+    @Test("Border background color fills interior without overriding content backgrounds")
     func testBorderBackgroundColor() {
-        let border = Border(padding: 0, background: .blue, Text("Hi"))
+        let border = Border(
+            padding: 0,
+            background: .blue,
+            Text("Hi").backgroundColor(.brightGreen)
+        )
+        let rendered = border.render()
         let lines = border.render().splitLinesPreservingEmpty()
         #expect(lines.count == 3)
 
         let prefix = ANSIColor.blue.backgroundCode
         let reset = ANSIColor.reset.rawValue
 
-        #expect(lines[0] == prefix + "┌──┐" + reset)
-        #expect(lines[2] == prefix + "└──┘" + reset)
+        #expect(lines[0].hasPrefix(prefix))
+        #expect(lines[0].hasSuffix(reset))
+        #expect(lines[2].hasPrefix(prefix))
+        #expect(lines[2].hasSuffix(reset))
 
         let middle = lines[1]
-        #expect(middle.hasPrefix(prefix + "│" + reset))
-        #expect(middle.hasSuffix(prefix + "│" + reset))
-        let inner = middle.dropFirst((prefix + "│" + reset).count).dropLast((prefix + "│" + reset).count)
-        #expect(inner == "Hi")
+        #expect(middle.contains(prefix + "│"))
+        #expect(middle.contains("│" + reset))
+        #expect(rendered.contains(ANSIColor.brightGreen.backgroundCode))
+
+        let ascii = """
+┌──┐
+│Hi│
+└──┘
+"""
+        #expect(rendered.removingANSISequences() == ascii)
+    }
+}
+
+private extension String {
+    func removingANSISequences() -> String {
+        var result = ""
+        var inEscape = false
+        for character in self {
+            if inEscape {
+                if ("a"..."z").contains(character) || ("A"..."Z").contains(character) {
+                    inEscape = false
+                }
+                continue
+            }
+
+            if character == "\u{001B}" {
+                inEscape = true
+                continue
+            }
+
+            result.append(character)
+        }
+        return result
     }
 }

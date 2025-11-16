@@ -50,7 +50,9 @@ public struct Border<Content: TUIView>: TUIView {
 
         let body = lines.map { line -> String in
             let padded = Self.pad(line, toVisibleWidth: width)
-            return leftBorder + paddingString + padded + paddingString + rightBorder
+            let interior = paddingString + padded + paddingString
+            let filledInterior = applyInteriorBackground(interior)
+            return leftBorder + filledInterior + rightBorder
         }
 
         return ([top] + body + [bottom]).joined(separator: "\n")
@@ -102,6 +104,68 @@ public struct Border<Content: TUIView>: TUIView {
         return line + String(repeating: " ", count: padding)
     }
 
+    private func applyInteriorBackground(_ string: String) -> String {
+        guard let backgroundColor else { return string }
+        let prefix = backgroundColor.backgroundCode
+        let reset = ANSIColor.reset.rawValue
+        guard !prefix.isEmpty, prefix != reset else { return string }
+
+        var result = String()
+        result.reserveCapacity(string.count + prefix.count * 2)
+        result.append(prefix)
+
+        var inEscape = false
+        var sequence = ""
+
+        for character in string {
+            result.append(character)
+            if inEscape {
+                sequence.append(character)
+                if character.isANSISequenceTerminator {
+                    inEscape = false
+                    switch classifyInteriorSequence(sequence) {
+                    case .reset:
+                        result.append(prefix)
+                    case .set, .other:
+                        break
+                    }
+                    sequence.removeAll(keepingCapacity: true)
+                }
+            } else if character == "\u{001B}" {
+                inEscape = true
+                sequence = String(character)
+            }
+        }
+
+        result.append(reset)
+        return result
+    }
+
+    private enum InteriorSequenceType {
+        case set
+        case reset
+        case other
+    }
+
+    private func classifyInteriorSequence(_ sequence: String) -> InteriorSequenceType {
+        if sequence == ANSIColor.reset.rawValue { return .reset }
+        guard sequence.hasPrefix("\u{001B}["),
+              let last = sequence.last,
+              last == "m" else { return .other }
+        let body = sequence.dropFirst(2).dropLast()
+        guard let first = body.split(separator: ";").first else { return .other }
+
+        if first == "0" || first == "49" { return .reset }
+        if first == "48" { return .set }
+
+        if let value = Int(first) {
+            if (40...47).contains(value) || (100...107).contains(value) {
+                return .set
+            }
+        }
+
+        return .other
+    }
 }
 
 public struct FocusRingBorder<Content: TUIView>: TUIView {
