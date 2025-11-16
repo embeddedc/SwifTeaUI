@@ -114,13 +114,11 @@ struct BorderTests {
         #expect(rendered.contains(ANSIColor.brightGreen.backgroundCode))
 
         let expectedASCII = """
-┌────────┐
-│        │
-│ ┌──┐   │
-│ │Hi│   │
-│ └──┘   │
-│        │
-└────────┘
+┌──────┐
+│ ┌──┐ │
+│ │Hi│ │
+│ └──┘ │
+└──────┘
 """
         #expect(rendered.removingANSISequences() == expectedASCII)
     }
