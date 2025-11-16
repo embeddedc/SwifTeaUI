@@ -32,4 +32,11 @@ public extension Binding {
             }
         )
     }
+
+    static func constant(_ value: Value) -> Binding<Value> {
+        Binding<Value>(
+            get: { value },
+            set: { _ in }
+        )
+    }
 }

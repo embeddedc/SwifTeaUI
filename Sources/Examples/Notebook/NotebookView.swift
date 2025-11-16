@@ -51,9 +51,7 @@ struct NotebookView: TUIView {
             ScrollView(
                 viewport: bodyViewport,
                 offset: bodyScrollBinding,
-                contentLength: bodyContentHeightBinding,
-                activeLine: bodyCursorLineBinding,
-                followActiveLine: followCursorBinding
+                contentLength: bodyContentHeightBinding
             ) {
                 TextEditor("Body...", text: bodyBinding, width: editorWidth)
                     .focusRingStyle(textInputFocusStyle)
@@ -62,6 +60,7 @@ struct NotebookView: TUIView {
                     .cursorPosition(bodyCursorBinding)
                     .cursorLine(bodyCursorLineBinding)
             }
+            .followingActiveLine(bodyCursorLineBinding, enabled: followCursorBinding)
             Text("")
             Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(.green)
             Text("Status: \(state.statusMessage)").foregroundColor(.cyan)

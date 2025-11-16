@@ -69,4 +69,111 @@ struct ScrollViewTests {
         #expect(offset == 2)
         #expect(length == 4)
     }
+
+    @Test("Horizontal ScrollView clamps offset and slices width")
+    func testHorizontalScrolling() {
+        var offset = 10
+        let binding = Binding<Int>(
+            get: { offset },
+            set: { offset = $0 }
+        )
+
+        let view = ScrollView(.horizontal, viewport: 4, offset: binding) {
+            Text("abcdef\n123456")
+        }
+
+        let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        #expect(lines == ["cdef", "3456"])
+        #expect(offset == 2)
+    }
+
+    @Test("Scroll indicators decorate visible window when enabled")
+    func testVerticalIndicators() {
+        var offset = 1
+        let binding = Binding<Int>(
+            get: { offset },
+            set: { offset = $0 }
+        )
+
+        let view = ScrollView(viewport: 2, offset: binding) {
+            Text("A\nB\nC\nD")
+        }
+        .scrollIndicators(.automatic)
+
+        let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        #expect(lines == ["↑B", "↓C"])
+    }
+
+    @Test("Horizontal indicators add leading and trailing glyphs")
+    func testHorizontalIndicators() {
+        var offset = 1
+        let binding = Binding<Int>(
+            get: { offset },
+            set: { offset = $0 }
+        )
+
+        let view = ScrollView(.horizontal, viewport: 3, offset: binding) {
+            Text("abcdef")
+        }
+        .scrollIndicators(.automatic)
+
+        let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        #expect(lines == ["←bcd→"])
+    }
+
+    @Test("scrollDisabled prevents automatic offset changes")
+    func testScrollDisabledPreventsAutoFollow() {
+        var offset = 0
+        var pinned = true
+
+        let offsetBinding = Binding<Int>(
+            get: { offset },
+            set: { offset = $0 }
+        )
+        let pinnedBinding = Binding<Bool>(
+            get: { pinned },
+            set: { pinned = $0 }
+        )
+
+        let view = ScrollView(
+            viewport: 2,
+            offset: offsetBinding,
+            pinnedToBottom: pinnedBinding
+        ) {
+            Text("1\n2\n3\n4")
+        }
+        .scrollDisabled()
+
+        let lines = view.render().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        #expect(lines == ["1", "2"])
+        #expect(offset == 0)
+    }
+
+    @Test("followingActiveLine helper keeps caret visible")
+    func testFollowingActiveLineHelper() {
+        var offset = 0
+        var line = 4
+        var follow = true
+
+        let offsetBinding = Binding<Int>(
+            get: { offset },
+            set: { offset = $0 }
+        )
+        let lineBinding = Binding<Int>(
+            get: { line },
+            set: { line = $0 }
+        )
+        let followBinding = Binding<Bool>(
+            get: { follow },
+            set: { follow = $0 }
+        )
+
+        let view = ScrollView(viewport: 2, offset: offsetBinding) {
+            Text((1...5).map(String.init).joined(separator: "\n"))
+        }
+        .followingActiveLine(lineBinding, enabled: followBinding)
+
+        _ = view.render()
+        #expect(offset == 3)
+    }
 }
