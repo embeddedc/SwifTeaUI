@@ -142,12 +142,11 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 ### Examples
 
-- `swift run SwifTeaCounterExample` shows the basics: counter controls alongside a focused text field, now with Bubble Tea–inspired dark/light themes you can toggle at runtime with `t` to see `.backgroundColor(_:)` + `SwifTeaTheme` in action.
+- `swift run SwifTeaShowcaseExample` combines the counter, color sample, and nested border demo into one terminal scene so you can see the primary widgets together.
 - `swift run SwifTeaNotebookExample` demonstrates two panes with scoped focus rings, arrow-key navigation, and text entry across multiple fields.
 - `swift run SwifTeaTaskRunnerExample` simulates a task queue, showcasing the spinner view inline and in the status bar for live progress feedback.
 - `swift run SwifTeaPackageListExample` renders a Mint-inspired dashboard that uses the new `Table` view plus a status bar to highlight outdated packages.
-- `swift run SwifTeaColorDemoExample` renders one `Text` with both a foreground tint and background fill so you can inspect reset behavior without extra layout noise.
-- `swift run SwifTeaBorderDemoExample` wraps stacked colored text in a `Border` to help diagnose trailing background artifacts on multi-line bordered layouts.
+- `swift run SwifTeaShowcaseExample` combines the color sample, nested border demo, and simplified counter so you can verify ANSI behavior in one place.
 
 ### Layout Primitives
 
