@@ -126,6 +126,9 @@ struct CounterView: TUIView {
     }
 
     private var gradientWidth: Int {
-        max(24, TerminalDimensions.current.columns - 10)
+        let terminalWidth = TerminalDimensions.current.columns
+        let frameInset = 8
+        let desired = terminalWidth > frameInset ? terminalWidth - frameInset : terminalWidth
+        return max(32, desired)
     }
 }

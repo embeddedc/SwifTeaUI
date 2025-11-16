@@ -40,4 +40,20 @@ struct MinimumSizeTests {
 
         #expect(rendered == "Fallback 80×20")
     }
+
+    @Test("MinimumTerminalSize reports zero dimensions when terminal collapses")
+    func testFallbackRenderedForZeroSize() {
+        let view = MinimumTerminalSize(
+            columns: 60,
+            rows: 18,
+            content: { Text("Visible") },
+            fallback: { size in Text("Fallback \(size.columns)×\(size.rows)") }
+        )
+
+        let rendered = TerminalDimensions.withTemporarySize(.zero) {
+            view.render()
+        }
+
+        #expect(rendered == "Fallback 0×0")
+    }
 }

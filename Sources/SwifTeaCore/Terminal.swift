@@ -65,9 +65,7 @@ public enum TerminalDimensions {
     private static func queryTerminalSize() -> TerminalSize {
         var ws = winsize()
         if ioctl(STDIN_FILENO_, TIOCGWINSZ, &ws) == 0 {
-            let cols = ws.ws_col > 0 ? Int(ws.ws_col) : 80
-            let rows = ws.ws_row > 0 ? Int(ws.ws_row) : 24
-            return TerminalSize(columns: cols, rows: rows)
+            return TerminalSize(columns: Int(ws.ws_col), rows: Int(ws.ws_row))
         }
         return currentSize
     }

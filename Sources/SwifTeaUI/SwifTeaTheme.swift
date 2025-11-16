@@ -69,8 +69,8 @@ public extension SwifTeaTheme {
         info: .brightBlue,
         frameBorder: .brightMagenta,
         background: .black,
-        accentGradient: [.brightMagenta, .brightBlue, .brightCyan],
-        accentGradientSymbol: "▀"
+        accentGradient: [.brightMagenta, .magenta, .brightBlue, .blue, .brightCyan],
+        accentGradientSymbol: " "
     )
 
     static let bubbleTeaLight = SwifTeaTheme(
@@ -85,7 +85,7 @@ public extension SwifTeaTheme {
         info: .cyan,
         frameBorder: .magenta,
         background: .white,
-        accentGradient: [.magenta, .brightYellow, .brightCyan],
-        accentGradientSymbol: "▄"
+        accentGradient: [.magenta, .brightMagenta, .brightYellow, .brightCyan, .brightBlue],
+        accentGradientSymbol: " "
     )
 }

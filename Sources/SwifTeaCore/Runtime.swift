@@ -126,6 +126,45 @@ public enum ANSIColor: String {
             return "\u{001B}[107m"
         }
     }
+
+    public var rgbComponents: (Int, Int, Int) {
+        switch self {
+        case .reset:
+            return (0, 0, 0)
+        case .black:
+            return (0, 0, 0)
+        case .red:
+            return (205, 49, 49)
+        case .green:
+            return (13, 188, 121)
+        case .yellow:
+            return (229, 229, 16)
+        case .blue:
+            return (36, 114, 200)
+        case .magenta:
+            return (188, 63, 188)
+        case .cyan:
+            return (17, 168, 205)
+        case .white:
+            return (229, 229, 229)
+        case .brightBlack:
+            return (102, 102, 102)
+        case .brightRed:
+            return (241, 76, 76)
+        case .brightGreen:
+            return (35, 209, 139)
+        case .brightYellow:
+            return (245, 245, 67)
+        case .brightBlue:
+            return (59, 142, 234)
+        case .brightMagenta:
+            return (214, 112, 214)
+        case .brightCyan:
+            return (41, 184, 219)
+        case .brightWhite:
+            return (255, 255, 255)
+        }
+    }
 }
 
 // MARK: - Public runtime namespace
@@ -166,21 +205,29 @@ public enum SwifTea {
 
                 let size = TerminalDimensions.refresh()
                 let sizeChanged = size != lastSize
+                let isDrawable = size.columns > 0 && size.rows > 0
                 if sizeChanged {
                     app.handleTerminalResize(from: lastSize, to: size)
-                    clearScreenAndHome()
+                    if isDrawable {
+                        clearScreenAndHome()
+                    }
                 }
-                // Render
-                let frame = app.view(model: app.model).render()
-                let changed = frame != lastFrame
-                let forceRefresh = sizeChanged || (!changed ? (staticFrameStreak >= maxStaticFrames) : false)
-                frameLogger?.log(frame, changed: changed, forced: forceRefresh)
-                if changed || forceRefresh {
-                    renderFrame(frame)
-                    lastFrame = frame
-                    staticFrameStreak = 0
+
+                if isDrawable {
+                    let frame = app.view(model: app.model).render()
+                    let changed = frame != lastFrame
+                    let forceRefresh = sizeChanged || (!changed ? (staticFrameStreak >= maxStaticFrames) : false)
+                    frameLogger?.log(frame, changed: changed, forced: forceRefresh)
+                    if changed || forceRefresh {
+                        renderFrame(frame)
+                        lastFrame = frame
+                        staticFrameStreak = 0
+                    } else {
+                        staticFrameStreak += 1
+                    }
                 } else {
-                    staticFrameStreak += 1
+                    lastFrame = nil
+                    staticFrameStreak = 0
                 }
                 lastSize = size
 
