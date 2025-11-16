@@ -142,7 +142,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 ### Examples
 
-- `swift run SwifTeaCounterExample` shows the basics: counter controls alongside a focused text field, now with header/form panels tinted via `.backgroundColor(_:)` to demonstrate container-wide styling.
+- `swift run SwifTeaCounterExample` shows the basics: counter controls alongside a focused text field, now with Bubble Tea–inspired dark/light themes you can toggle at runtime with `t` to see `.backgroundColor(_:)` + `SwifTeaTheme` in action.
 - `swift run SwifTeaNotebookExample` demonstrates two panes with scoped focus rings, arrow-key navigation, and text entry across multiple fields.
 - `swift run SwifTeaTaskRunnerExample` simulates a task queue, showcasing the spinner view inline and in the status bar for live progress feedback.
 - `swift run SwifTeaPackageListExample` renders a Mint-inspired dashboard that uses the new `Table` view plus a status bar to highlight outdated packages.
@@ -152,6 +152,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 - `VStack` and `HStack` accept `spacing` and alignment arguments that mirror SwiftUI. Need a fixed height? Call `.frame(height:alignment:)` on the stack rather than passing a custom parameter.
 - Call `.padding(_:)` on any view to inset the rendered output with ANSI-aware spacing.
 - Wrap any view in `.foregroundColor(_:)` or `.backgroundColor(_:)` to tint entire containers (Stacks, Borders, custom composites) with ANSI colors without re-styling each child manually.
+- Need curated palettes? `SwifTeaTheme` ships with `bubbleTeaDark` / `bubbleTeaLight` presets so demos (like Counter) can apply consistent accent/success/info colors and let users toggle between them.
 - `ScrollView(axis:viewport:offset:)` clamps tall content (vertical) or wide buffers (horizontal) without re-rendering children. Bind `contentLength` to capture the total rows or columns, call `.followingActiveLine(_:)` (optionally with an enable binding) to auto-scroll caret positions, flip on `.scrollIndicators(.automatic)` for arrow chrome when content overflows, and use `.scrollDisabled(true)` whenever reducers need to freeze scroll state manually.
 - `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.

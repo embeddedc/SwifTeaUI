@@ -43,21 +43,39 @@ struct CounterModel {
         case editBody(TextFieldEvent)
         case focusNext
         case focusPrevious
+        case toggleTheme
+    }
+
+    enum ThemeSelection: CaseIterable {
+        case bubbleTeaDark
+        case bubbleTeaLight
+
+        var theme: SwifTeaTheme {
+            switch self {
+            case .bubbleTeaDark:
+                return .bubbleTeaDark
+            case .bubbleTeaLight:
+                return .bubbleTeaLight
+            }
+        }
     }
 
     @State private var state: CounterState
     private let viewModel: CounterViewModel
     private let focusCoordinator: CounterFocusCoordinator
     @FocusState private var focusedField: CounterFocusField?
+    @State private var themeSelection: ThemeSelection
 
     init(
         state: CounterState = CounterState(),
         focusedField: CounterFocusField? = .controls,
         viewModel: CounterViewModel = CounterViewModel(),
-        focusCoordinator: CounterFocusCoordinator = CounterFocusCoordinator()
+        focusCoordinator: CounterFocusCoordinator = CounterFocusCoordinator(),
+        themeSelection: ThemeSelection = .bubbleTeaDark
     ) {
         self._state = State(wrappedValue: state)
         self._focusedField = FocusState(wrappedValue: focusedField)
+        self._themeSelection = State(wrappedValue: themeSelection)
         self.viewModel = viewModel
         self.focusCoordinator = focusCoordinator
     }
@@ -82,6 +100,8 @@ struct CounterModel {
             focusCoordinator.focusPrevious(current: &focusedField)
         case .quit:
             break
+        case .toggleTheme:
+            cycleTheme()
         }
     }
 
@@ -92,7 +112,8 @@ struct CounterModel {
             titleBinding: titleBinding,
             bodyBinding: bodyBinding,
             titleFocusBinding: titleFocusBinding,
-            bodyFocusBinding: bodyFocusBinding
+            bodyFocusBinding: bodyFocusBinding,
+            theme: themeSelection.theme
         )
     }
 
@@ -120,6 +141,7 @@ struct CounterModel {
         switch key {
         case .char("u"), .rightArrow: return .increment
         case .char("d"), .leftArrow:  return .decrement
+        case .char("t"), .char("T"): return .toggleTheme
         case .char("q"), .ctrlC, .escape: return .quit
         default: return nil
         }
@@ -151,5 +173,12 @@ struct CounterModel {
 
     private var bodyFocusBinding: Binding<Bool> {
         $focusedField.isFocused(.noteBody)
+    }
+
+    private mutating func cycleTheme() {
+        let all = ThemeSelection.allCases
+        guard let index = all.firstIndex(of: themeSelection) else { return }
+        let next = all[(index + 1) % all.count]
+        themeSelection = next
     }
 }

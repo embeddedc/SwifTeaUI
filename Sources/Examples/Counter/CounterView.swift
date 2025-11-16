@@ -8,36 +8,22 @@ struct CounterView: TUIView {
     let bodyBinding: Binding<String>
     let titleFocusBinding: Binding<Bool>
     let bodyFocusBinding: Binding<Bool>
+    let theme: SwifTeaTheme
 
     var body: some TUIView {
         MinimumTerminalSize(columns: 60, rows: 18) {
-            VStack(spacing: 2, alignment: .leading) {
-                VStack(spacing: 1, alignment: .leading) {
-                    Text("SwifTea Counter").foregroundColor(.yellow).bold()
-                    Text("Count: \(state.count)").foregroundColor(.green)
-                    Text("[u] up | [d] down | [←/→] also work | [q]/[Esc]/[Ctrl-C] quit").foregroundColor(.cyan)
-                    Text("[Tab] move focus forward | [Shift+Tab] move back").foregroundColor(.yellow)
+            Border(
+                padding: 1,
+                color: theme.frameBorder,
+                bold: true,
+                VStack(spacing: 2, alignment: .leading) {
+                    headerPanel
+                    accentDivider
+                    formPanel
                 }
                 .padding(1)
-                .backgroundColor(.cyan)
-
-                VStack(spacing: 1, alignment: .leading) {
-                    Text("Note title:").foregroundColor(focus == .noteTitle ? .cyan : .yellow)
-                    TextField("Title...", text: titleBinding)
-                        .focused(titleFocusBinding)
-
-                    Text("Note body:").foregroundColor(focus == .noteBody ? .cyan : .yellow)
-                    TextField("Body...", text: bodyBinding)
-                        .focused(bodyFocusBinding)
-
-                    Text("Draft title: \(state.noteTitle)").foregroundColor(.green)
-                    Text("Draft body: \(state.noteBody)").foregroundColor(.green)
-                    Text("Last submitted -> title: \(state.lastSubmittedTitle), body: \(state.lastSubmittedBody)").foregroundColor(.cyan)
-                    Text("Focus: \(focusDescription)").foregroundColor(.yellow)
-                }
-                .padding(1)
-                .backgroundColor(.green)
-            }
+                .backgroundColor(theme.background ?? .reset)
+            )
         } fallback: { size in
             VStack(spacing: 1, alignment: .leading) {
                 Text("SwifTea Counter").foregroundColor(.yellow).bold()
@@ -64,5 +50,82 @@ struct CounterView: TUIView {
         case .none:
             return "none"
         }
+    }
+
+    private var headerPanel: some TUIView {
+        VStack(spacing: 1, alignment: .leading) {
+            accentDivider
+            Text("SwifTea Counter")
+                .foregroundColor(theme.headerPanel.foreground)
+                .bold()
+            Text("Count: \(state.count)")
+                .foregroundColor(theme.success)
+            countBadge
+            Text("[u] up | [d] down | [←/→] adjust | [q]/[Esc]/[Ctrl-C] quit")
+                .foregroundColor(theme.mutedText)
+            Text("[Tab] forward focus | [Shift+Tab] back | [t] toggle theme")
+                .foregroundColor(theme.mutedText)
+            Text("Theme: \(theme.name)")
+                .foregroundColor(theme.info)
+        }
+        .padding(1)
+        .backgroundColor(theme.headerPanel.background ?? .reset)
+    }
+
+    private var formPanel: some TUIView {
+        VStack(spacing: 1, alignment: .leading) {
+            GradientBar(
+                colors: accentColors,
+                width: gradientWidth,
+                symbol: theme.accentGradientSymbol
+            )
+            Text("Note title:")
+                .foregroundColor(focus == .noteTitle ? theme.accent : theme.primaryText)
+            TextField("Title...", text: titleBinding)
+                .focused(titleFocusBinding)
+
+            Text("Note body:")
+                .foregroundColor(focus == .noteBody ? theme.accent : theme.primaryText)
+            TextField("Body...", text: bodyBinding)
+                .focused(bodyFocusBinding)
+
+            Text("Draft title: \(state.noteTitle)")
+                .foregroundColor(theme.success)
+            Text("Draft body: \(state.noteBody)")
+                .foregroundColor(theme.success)
+            Text("Last submitted -> title: \(state.lastSubmittedTitle), body: \(state.lastSubmittedBody)")
+                .foregroundColor(theme.info)
+            Text("Focus: \(focusDescription)")
+                .foregroundColor(theme.warning)
+        }
+        .padding(1)
+        .backgroundColor(theme.formPanel.background ?? .reset)
+    }
+
+    private var accentDivider: some TUIView {
+        GradientBar(
+            colors: accentColors,
+            width: gradientWidth,
+            symbol: theme.accentGradientSymbol
+        )
+    }
+
+    private var countBadge: some TUIView {
+        Border(
+            padding: 0,
+            color: theme.accent,
+            bold: true,
+            Text(" ✦ Brew score: \(state.count) ✦ ")
+                .foregroundColor(theme.headerPanel.foreground)
+                .backgroundColor(theme.headerPanel.background ?? .reset)
+        )
+    }
+
+    private var accentColors: [ANSIColor] {
+        theme.accentGradient.isEmpty ? [theme.accent] : theme.accentGradient
+    }
+
+    private var gradientWidth: Int {
+        max(24, TerminalDimensions.current.columns - 10)
     }
 }
