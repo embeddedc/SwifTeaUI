@@ -146,7 +146,6 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 - `swift run SwifTeaNotebookExample` demonstrates two panes with scoped focus rings, arrow-key navigation, and text entry across multiple fields.
 - `swift run SwifTeaTaskRunnerExample` simulates a task queue, showcasing the spinner view inline and in the status bar for live progress feedback.
 - `swift run SwifTeaPackageListExample` renders a Mint-inspired dashboard that uses the new `Table` view plus a status bar to highlight outdated packages.
-- `swift run SwifTeaShowcaseExample` combines the color sample, nested border demo, and simplified counter so you can verify ANSI behavior in one place.
 
 ### Layout Primitives
 
@@ -175,4 +174,4 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 
 - `Spinner` renders an animated activity indicator that follows the runtime clock—use it inline with other views or embed its output inside components like `StatusBar` when background work is in flight. Built-in styles include `.ascii`, `.braille`, `.dots`, and `.line`; prefer `.ascii` or `.dots` when targeting monochrome terminals so glyphs stay legible without color cues.
 - `ProgressMeter` draws lightweight `[########----] 75%` bars sized for status strips, making it easy to surface coarse task progress without leaving the status area.
-- TaskRunner demonstrates a tiny status message queue so transient updates (step started/completed) cycle through the status bar instead of scrolling the primary layout—handy for longer running Swiftly workflows.
+- TaskRunner demonstrates a tiny status message queue so transient updates (step started/completed) cycle through the status bar instead of scrolling the primary layout—handy for longer running workflows.
