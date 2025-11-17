@@ -1,3 +1,4 @@
+import Foundation
 import SwifTeaUI
 
 struct GalleryModel {
@@ -38,6 +39,7 @@ struct GalleryModel {
         case notebook(NotebookModel.Action)
         case tasks(TaskRunnerModel.Action)
         case packages(PackageListModel.Action)
+        case toggleHelp
         case quit
     }
 
@@ -45,31 +47,42 @@ struct GalleryModel {
     private var notebook: NotebookModel
     private var taskRunner: TaskRunnerModel
     private var packageList: PackageListModel
+    @State private var overlays: OverlayPresenter
 
     init(
         activeSection: Section = .notebook,
         notebook: NotebookModel = NotebookModel(),
         taskRunner: TaskRunnerModel? = nil,
-        packageList: PackageListModel = PackageListModel()
+        packageList: PackageListModel = PackageListModel(),
+        overlays: OverlayPresenter = OverlayPresenter()
     ) {
         self._activeSection = State(wrappedValue: activeSection)
         self.notebook = notebook
         self.taskRunner = taskRunner ?? TaskRunnerModel(effects: Self.makeTaskRunnerEffects())
         self.packageList = packageList
+        self._overlays = State(wrappedValue: overlays)
     }
 
     mutating func update(action: Action) {
         switch action {
         case .selectSection(let section):
             activeSection = section
+            showSectionToast()
         case .cycleSection(let offset):
             activeSection = activeSection.next(offset)
+            showSectionToast()
         case .notebook(let notebookAction):
             notebook.update(action: notebookAction)
         case .tasks(let taskAction):
             taskRunner.update(action: taskAction)
         case .packages(let packageAction):
             packageList.update(action: packageAction)
+        case .toggleHelp:
+            if overlays.hasModal {
+                overlays.dismissModal()
+            } else {
+                presentHelpModal()
+            }
         case .quit:
             break
         }
@@ -77,11 +90,12 @@ struct GalleryModel {
 
     func makeView() -> some TUIView {
         let selectedView = viewForActiveSection()
-        return GalleryView(
+        let galleryView = GalleryView(
             activeSection: activeSection,
             contentView: selectedView,
             shortcutsEnabled: sectionShortcutsEnabled
         )
+        return OverlayHost(presenter: overlays, content: galleryView)
     }
 
     mutating func initializeEffects() {
@@ -90,6 +104,10 @@ struct GalleryModel {
 
     mutating func handleTerminalResize(to newSize: TerminalSize) {
         taskRunner.updateTerminalMetrics(TerminalMetrics(size: newSize))
+    }
+
+    mutating func tickOverlays(_ delta: TimeInterval) {
+        overlays.tick(deltaTime: delta)
     }
 
     func shouldExit(for action: Action) -> Bool {
@@ -102,7 +120,7 @@ struct GalleryModel {
             return taskRunner.shouldExit(for: inner)
         case .packages(let inner):
             return packageList.shouldExit(for: inner)
-        case .selectSection, .cycleSection:
+        case .selectSection, .cycleSection, .toggleHelp:
             return false
         }
     }
@@ -115,6 +133,8 @@ struct GalleryModel {
         }
 
         switch key {
+        case .char("?"):
+            return .toggleHelp
         case .ctrlC:
             return .quit
         case .tab:
@@ -203,5 +223,32 @@ struct GalleryModel {
                 SwifTea.cancelEffects(withID: id)
             }
         )
+    }
+
+    private mutating func showSectionToast() {
+        let message = "Switched to \(activeSection.title)"
+        overlays.presentToast(
+            placement: .bottom,
+            duration: 2,
+            style: .info
+        ) {
+            Text(message)
+        }
+    }
+
+    private mutating func presentHelpModal() {
+        overlays.presentModal(
+            priority: 1,
+            title: "Gallery Shortcuts",
+            style: .info
+        ) {
+            VStack(spacing: 1, alignment: .leading) {
+                Text("[1]/[2]/[3] select section")
+                Text("[Tab]/[Shift+Tab] cycle sections")
+                Text("[?] toggle this help")
+                Text("[Ctrl-C] quit")
+            }
+            .foregroundColor(.brightCyan)
+        }
     }
 }

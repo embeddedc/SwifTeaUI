@@ -1,3 +1,4 @@
+import Foundation
 import SwifTeaUI
 
 public struct GalleryApp: TUIApp {
@@ -38,5 +39,9 @@ struct GalleryScene: TUIScene {
 
     func shouldExit(for action: Action) -> Bool {
         model.shouldExit(for: action)
+    }
+
+    mutating func handleFrame(deltaTime: TimeInterval) {
+        model.tickOverlays(deltaTime)
     }
 }
