@@ -230,44 +230,24 @@ struct PackageListView: TUIView {
     }
 
     private var tableView: some TUIView {
-        Table(
-            state.visiblePackages,
-            divider: .line()
-        ) {
-            TableColumn("Package", width: .flex(min: 18)) { (package: PackageInfo) in
-                Text(package.name).bold()
-            }
-            TableColumn("Version", width: .fitContent, alignment: .center) { (package: PackageInfo) in
-                versionText(for: package)
-            }
-            TableColumn("Platform", width: .fitContent) { (package: PackageInfo) in
-                Text(package.platform)
-            }
-            TableColumn("Status", width: .fitContent) { (package: PackageInfo) in
-                Text(package.status.label)
-                    .foregroundColor(package.status.color)
-            }
-            TableColumn("Updated", width: .fitContent) { (package: PackageInfo) in
-                Text(package.lastUpdated)
-            }
-        } footer: {
-            Text("\(state.visiblePackages.count) of \(state.packages.count) packages")
-                .foregroundColor(.cyan)
-        } rowStyle: { (package: PackageInfo, index: Int) in
-            if case .outdated = package.status {
-                return TableRowStyle(backgroundColor: .yellow, isBold: true)
-            }
-            if index.isMultiple(of: 2) {
-                return TableRowStyle(backgroundColor: .cyan)
-            }
-            return nil
+        List(state.visiblePackages, id: \.id, rowSpacing: 0, separator: .dashed(color: theme.frameBorder)) { package in
+            Text(package.name)
+                .foregroundColor(theme.primaryText)
+                .bold()
+            Text(versionText(for: package).render())
+            Text(package.platform)
+                .foregroundColor(theme.info)
+            Text(package.status.label)
+                .foregroundColor(package.status.color)
+            Text(package.lastUpdated)
+                .foregroundColor(theme.mutedText)
         }
     }
 
     private func versionText(for package: PackageInfo) -> Text {
         switch package.status {
         case .outdated(let latest):
-            return Text("\(package.version) → \(latest)").foregroundColor(.yellow)
+            return Text("\(package.version) → \(latest)").foregroundColor(theme.warning)
         default:
             return Text(package.version).foregroundColor(.green)
         }
