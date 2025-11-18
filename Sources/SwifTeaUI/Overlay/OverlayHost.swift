@@ -77,9 +77,8 @@ private struct ModalOverlay<Base: TUIView>: TUIView {
     let modal: OverlayPresenter.ModalSnapshot
 
     var body: some TUIView {
-        VStack(spacing: 1, alignment: .leading) {
+        ZStack(alignment: .center) {
             base.foregroundColor(.brightBlack)
-            Text("")
             Border(
                 padding: 2,
                 color: modal.style.borderColor,

@@ -11,6 +11,18 @@ struct ZStackTests {
         }
 
         let rendered = stack.render()
-        #expect(rendered.contains("He++"))
+        #expect(rendered.contains("Hell++"))
+    }
+
+    @Test("Alignment centers overlay content")
+    func testCenterAlignment() {
+        let stack = ZStack(alignment: .center) {
+            Text("------\n------\n------")
+            Text("XX\nXX")
+        }
+
+        let lines = stack.render().split(separator: "\n").map(String.init)
+        #expect(lines.count == 3)
+        #expect(lines[1].contains("XX"))
     }
 }
