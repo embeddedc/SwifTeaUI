@@ -35,81 +35,32 @@ struct NotebookView: TUIView {
 
     private func renderMainLayout() -> some TUIView {
         let size = TerminalDimensions.current
-        let mode = layoutMode(for: size)
-        let editorWidth = preferredEditorWidth(for: size, mode: mode)
+        let dualEditorWidth = preferredEditorWidth(for: size, mode: .dualColumn)
+        let stackedEditorWidth = preferredEditorWidth(for: size, mode: .stacked)
 
-        let textInputFocusStyle = FocusStyle(indicator: "", color: nil, bold: false)
+        let sidebarPane = makeSidebarPane()
+        let dualEditor = makeEditorPane(editorWidth: dualEditorWidth)
+        let stackedEditor = makeEditorPane(editorWidth: stackedEditorWidth)
 
-        let editorContent = Border(
+        let layout = Border(
             padding: 1,
-            color: theme.frameBorder,
-            background: theme.background,
+            AdaptiveStack(breakpoint: stackedBreakpoint) {
+            HStack(spacing: 2, horizontalAlignment: .leading, verticalAlignment: .top) {
+                sidebarPane
+                dualEditor
+            }
+        } collapsed: {
             VStack(spacing: 1, alignment: .leading) {
-            editorTitleView
-            Text("Title:").foregroundColor(focus == .editorTitle ? theme.accent : theme.info)
-            TextField("Title...", text: titleBinding)
-                .focusRingStyle(textInputFocusStyle)
-                .focused(titleFocusBinding)
-                .blinkingCursor()
-            Text("Body:").foregroundColor(focus == .editorBody ? theme.accent : theme.info)
-            ScrollView(
-                viewport: bodyViewport,
-                offset: bodyScrollBinding,
-                contentLength: bodyContentHeightBinding
-            ) {
-                TextEditor("Body...", text: bodyBinding, width: editorWidth)
-                    .focusRingStyle(textInputFocusStyle)
-                    .focused(bodyFocusBinding)
-                    .blinkingCursor()
-                    .cursorPosition(bodyCursorBinding)
-                    .cursorLine(bodyCursorLineBinding)
+                sidebarPane
+                stackedEditor
             }
-            .followingActiveLine(bodyCursorLineBinding, enabled: followCursorBinding)
-            Text("")
-            Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(theme.success)
-            Text("Status: \(state.statusMessage)").foregroundColor(theme.info)
-        })
-        let sidebar = Sidebar(
-            title: "Notes",
-            items: state.notes,
-            selection: state.selectedIndex,
-            isFocused: focus == .sidebar,
-            style: sidebarStyle
-        ) { note in
-            note.title
         }
-
-        let sidebarColumn = Border(
-            padding: 1,
-            color: theme.frameBorder,
-            background: theme.background,
-            sidebar.padding(0)
         )
-        let editorColumn = editorContent
-
-        let combined: AnyTUIView = {
-            switch mode {
-            case .dualColumn:
-                return AnyTUIView(
-                    Border(padding: 1, HStack(spacing: 2, horizontalAlignment: .leading, verticalAlignment: .top) {
-                        sidebarColumn
-                        editorColumn
-                    })
-                )
-            case .stacked:
-                return AnyTUIView(
-                    Border(padding: 1, VStack(spacing: 1, alignment: .leading) {
-                        sidebarColumn
-                        editorColumn
-                    })
-                )
-            }
-        }()
 
         return VStack(spacing: 1, alignment: .leading) {
             Text("SwifTea Notebook").foregroundColor(theme.accent).bold()
             Text("")
-            combined
+            AnyTUIView(layout)
             Text("")
             statusBar
         }
@@ -156,8 +107,61 @@ struct NotebookView: TUIView {
         )
     }
 
-    private func layoutMode(for size: TerminalSize) -> LayoutMode {
-        size.columns >= stackedBreakpoint ? .dualColumn : .stacked
+    private func makeSidebarPane() -> AnyTUIView {
+        let sidebar = Sidebar(
+            title: "Notes",
+            items: state.notes,
+            selection: state.selectedIndex,
+            isFocused: focus == .sidebar,
+            style: sidebarStyle
+        ) { note in
+            note.title
+        }
+
+        let pane = Border(
+            padding: 1,
+            color: theme.frameBorder,
+            background: theme.background,
+            sidebar.padding(0)
+        )
+        return AnyTUIView(pane)
+    }
+
+    private func makeEditorPane(editorWidth: Int) -> AnyTUIView {
+        let textInputFocusStyle = FocusStyle(indicator: "", color: nil, bold: false)
+
+        let pane = Border(
+            padding: 1,
+            color: theme.frameBorder,
+            background: theme.background,
+            VStack(spacing: 1, alignment: .leading) {
+                editorTitleView
+                Text("Title:").foregroundColor(focus == .editorTitle ? theme.accent : theme.info)
+                TextField("Title...", text: titleBinding)
+                    .focusRingStyle(textInputFocusStyle)
+                    .focused(titleFocusBinding)
+                    .blinkingCursor()
+                Text("Body:").foregroundColor(focus == .editorBody ? theme.accent : theme.info)
+                ScrollView(
+                    viewport: bodyViewport,
+                    offset: bodyScrollBinding,
+                    contentLength: bodyContentHeightBinding
+                ) {
+                    TextEditor("Body...", text: bodyBinding, width: editorWidth)
+                        .focusRingStyle(textInputFocusStyle)
+                        .focused(bodyFocusBinding)
+                        .blinkingCursor()
+                        .cursorPosition(bodyCursorBinding)
+                        .cursorLine(bodyCursorLineBinding)
+                }
+                .followingActiveLine(bodyCursorLineBinding, enabled: followCursorBinding)
+                Text("")
+                Text("Saved note: \(state.notes[state.selectedIndex].title)").foregroundColor(theme.success)
+                Text("Status: \(state.statusMessage)").foregroundColor(theme.info)
+            }
+        )
+
+        return AnyTUIView(pane)
     }
 
     private func preferredEditorWidth(for size: TerminalSize, mode: LayoutMode) -> Int {
