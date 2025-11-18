@@ -188,13 +188,28 @@ private func columns(from string: String) -> ([ANSIColumn], String) {
 private func mergeLine(base: String, overlay: String, coverage: [Bool]) -> String {
     let (baseColumns, baseTrailing) = columns(from: base)
     let (overlayColumns, overlayTrailing) = columns(from: overlay)
-    let width = max(baseColumns.count, overlayColumns.count)
+    let width = max(baseColumns.count, overlayColumns.count, coverage.count)
     var result = ""
+    var overlayIsActive = false
+    var appendedOverlayTrailing = false
 
     for index in 0..<width {
         let baseColumn = index < baseColumns.count ? baseColumns[index] : ANSIColumn(prefix: "", char: " ")
-        if index < overlayColumns.count, coverage.indices.contains(index), coverage[index] {
-            let overlayColumn = overlayColumns[index]
+        let overlayColumn = index < overlayColumns.count ? overlayColumns[index] : nil
+        let overlayCovers = overlayColumn != nil && index < coverage.count && coverage[index]
+
+        if overlayIsActive && !overlayCovers {
+            if let overlayColumn, !overlayColumn.prefix.isEmpty {
+                result += overlayColumn.prefix
+            } else if !overlayTrailing.isEmpty {
+                result += overlayTrailing
+                appendedOverlayTrailing = true
+            }
+            overlayIsActive = false
+        }
+
+        if overlayCovers, let overlayColumn {
+            overlayIsActive = true
             result += overlayColumn.prefix
             result.append(overlayColumn.char)
         } else {
@@ -203,7 +218,14 @@ private func mergeLine(base: String, overlay: String, coverage: [Bool]) -> Strin
         }
     }
 
-    result += overlayTrailing
+    if overlayIsActive && !overlayTrailing.isEmpty {
+        result += overlayTrailing
+        appendedOverlayTrailing = true
+    }
+
+    if !appendedOverlayTrailing {
+        result += overlayTrailing
+    }
     result += baseTrailing
     return result
 }

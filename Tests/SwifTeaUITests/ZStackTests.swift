@@ -5,13 +5,13 @@ struct ZStackTests {
 
     @Test("Overlay draws on top of base")
     func testSimpleOverlay() {
-        let stack = ZStack {
-            Text("Hello   ")
-            Text("  ++")
+        let stack = ZStack(alignment: .topLeading) {
+            Text("Hello")
+            Text("++")
         }
 
         let rendered = stack.render()
-        #expect(rendered.contains("Hell++"))
+        #expect(rendered.hasPrefix("++llo"))
     }
 
     @Test("Alignment centers overlay content")
@@ -24,5 +24,17 @@ struct ZStackTests {
         let lines = stack.render().split(separator: "\n").map(String.init)
         #expect(lines.count == 3)
         #expect(lines[1].contains("XX"))
+    }
+
+    @Test("Overlay styles stay within coverage bounds")
+    func testOverlayStyleResetWithinBounds() {
+        let stack = ZStack(alignment: .topLeading) {
+            Text("HelloWorld")
+            Text("Hi").backgroundColor(.brightMagenta)
+        }
+
+        let rendered = stack.render()
+        let resetSequence = ANSIColor.reset.rawValue
+        #expect(rendered.contains(resetSequence + "lloWorld"))
     }
 }
