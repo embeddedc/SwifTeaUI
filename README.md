@@ -153,6 +153,7 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 - `ScrollView(axis:viewport:offset:)` clamps tall content (vertical) or wide buffers (horizontal) without re-rendering children. Bind `contentLength` to capture the total rows or columns, call `.followingActiveLine(_:)` (optionally with an enable binding) to auto-scroll caret positions, flip on `.scrollIndicators(.automatic)` for arrow chrome when content overflows, and use `.scrollDisabled(true)` whenever reducers need to freeze scroll state manually.
 - `HStack(spacing:horizontalAlignment:verticalAlignment:)` measures ANSI widths accurately so mixed-color content still lines up.
 - `AdaptiveStack(breakpoint:expanded:collapsed:)` switches entire layouts based on terminal width—use it to collapse dual-column panes into a stacked presentation without re-implementing breakpoint checks.
+- `ZStack` overlays multiple views in z-order so badges/tooltips/overlays can be layered without touching the base content.
 - All `TUIView` conformers expose `var body: some TUIView`; return `VStack`/`HStack` (or any other view) and the runtime calls `render()` for you—no manual `.render()` needed.
 
 ### Terminal Awareness
