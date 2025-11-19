@@ -63,7 +63,7 @@ Table(processes, columnSpacing: 2, rowSpacing: 1, divider: .line()) {
    - `TableDividerStyle` exposes colored `.line` dividers and full custom builders; `TableRowStyle.stripedRows` ships as a convenience helper for zebra striping.
 4. **Ergonomics & Docs (In Progress)**
    - Example usage is limited to the Package List demo; README/docs still need a dedicated table section.
-   - TODO: add key-path column sugar and focus/selection bindings inspired by SwiftUI’s table selection API.
+   - Key-path column sugar (`TableColumn(value:)`), zebra helper, and `TableSelectionConfiguration` for single/multi bindings now mirror SwiftUI’s ergonomics.
 
 ## Testing Plan
 - ✅ `Tests/SwifTeaUITests/TableTests.swift` exercises header/footer rendering, divider lines, width rules, and ANSI row styling.

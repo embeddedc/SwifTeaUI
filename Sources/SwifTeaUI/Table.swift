@@ -48,6 +48,26 @@ public struct TableColumn<Row> {
     }
 }
 
+public extension TableColumn {
+    init<Value>(
+        _ title: String? = nil,
+        value keyPath: KeyPath<Row, Value>,
+        width: Width = .fitContent,
+        alignment: Alignment = .leading,
+        format: @escaping (Value) -> String = { value in
+            String(describing: value)
+        }
+    ) {
+        self.init(
+            title,
+            width: width,
+            alignment: alignment
+        ) { row in
+            Text(format(row[keyPath: keyPath]))
+        }
+    }
+}
+
 public struct TableRowStyle {
     public struct Border {
         public var leading: String
@@ -87,6 +107,18 @@ public struct TableRowStyle {
 }
 
 public extension TableRowStyle {
+    func merging(_ style: TableRowStyle) -> TableRowStyle {
+        TableRowStyle(
+            foregroundColor: style.foregroundColor ?? self.foregroundColor,
+            backgroundColor: style.backgroundColor ?? self.backgroundColor,
+            isBold: self.isBold || style.isBold,
+            isUnderlined: self.isUnderlined || style.isUnderlined,
+            isDimmed: self.isDimmed || style.isDimmed,
+            isReversed: self.isReversed || style.isReversed,
+            border: style.border ?? self.border
+        )
+    }
+
     static func focused(
         accent: ANSIColor = .cyan,
         border: Border = Border(leading: "▌ ", trailing: " ▐")
@@ -94,6 +126,20 @@ public extension TableRowStyle {
         TableRowStyle(
             foregroundColor: accent,
             isBold: true,
+            border: border
+        )
+    }
+
+    static func selected(
+        foregroundColor: ANSIColor? = nil,
+        backgroundColor: ANSIColor = .blue,
+        isBold: Bool = true,
+        border: Border? = nil
+    ) -> TableRowStyle {
+        TableRowStyle(
+            foregroundColor: foregroundColor,
+            backgroundColor: backgroundColor,
+            isBold: isBold,
             border: border
         )
     }
@@ -158,6 +204,72 @@ public struct TableColumnBuilder<Row> {
     }
 }
 
+public struct TableSelectionConfiguration<ID: Hashable> {
+    public enum Mode {
+        case single(Binding<ID?>)
+        case multiple(Binding<Set<ID>>)
+    }
+
+    let mode: Mode
+    let focused: Binding<ID?>?
+    let selectionStyle: TableRowStyle
+    let focusedStyle: TableRowStyle
+
+    public init(
+        mode: Mode,
+        focused: Binding<ID?>? = nil,
+        selectionStyle: TableRowStyle = .selected(),
+        focusedStyle: TableRowStyle = .focused()
+    ) {
+        self.mode = mode
+        self.focused = focused
+        self.selectionStyle = selectionStyle
+        self.focusedStyle = focusedStyle
+    }
+
+    public static func single(
+        _ binding: Binding<ID?>,
+        focused: Binding<ID?>? = nil,
+        selectionStyle: TableRowStyle = .selected(),
+        focusedStyle: TableRowStyle = .focused()
+    ) -> TableSelectionConfiguration<ID> {
+        TableSelectionConfiguration(
+            mode: .single(binding),
+            focused: focused,
+            selectionStyle: selectionStyle,
+            focusedStyle: focusedStyle
+        )
+    }
+
+    public static func multiple(
+        _ binding: Binding<Set<ID>>,
+        focused: Binding<ID?>? = nil,
+        selectionStyle: TableRowStyle = .selected(),
+        focusedStyle: TableRowStyle = .focused()
+    ) -> TableSelectionConfiguration<ID> {
+        TableSelectionConfiguration(
+            mode: .multiple(binding),
+            focused: focused,
+            selectionStyle: selectionStyle,
+            focusedStyle: focusedStyle
+        )
+    }
+
+    func isSelected(_ id: ID) -> Bool {
+        switch mode {
+        case .single(let binding):
+            return binding.wrappedValue == id
+        case .multiple(let binding):
+            return binding.wrappedValue.contains(id)
+        }
+    }
+
+    func isFocused(_ id: ID) -> Bool {
+        guard let focused else { return false }
+        return focused.wrappedValue == id
+    }
+}
+
 public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
     public typealias Row = Data.Element
 
@@ -169,6 +281,7 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
     private let headerBuilder: () -> [any TUIView]
     private let footerBuilder: () -> [any TUIView]
     private let rowStyle: ((Row, Int) -> TableRowStyle?)?
+    private let selectionConfiguration: TableSelectionConfiguration<ID>?
     private let idResolver: (Row) -> ID
 
     public init(
@@ -177,10 +290,11 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         columnSpacing: Int = 2,
         rowSpacing: Int = 0,
         divider: TableDividerStyle = .none,
-        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>],
         @TUIBuilder header: @escaping () -> [any TUIView] = { [] },
         @TUIBuilder footer: @escaping () -> [any TUIView] = { [] },
-        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil
+        selection: TableSelectionConfiguration<ID>? = nil,
+        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil,
+        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>]
     ) {
         self.init(
             data,
@@ -188,10 +302,11 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
             columnSpacing: columnSpacing,
             rowSpacing: rowSpacing,
             divider: divider,
-            columns: columns,
             header: header,
             footer: footer,
-            rowStyle: rowStyle
+            selection: selection,
+            rowStyle: rowStyle,
+            columns: columns
         )
     }
 
@@ -201,20 +316,22 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         columnSpacing: Int = 2,
         rowSpacing: Int = 0,
         divider: TableDividerStyle = .none,
-        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>],
         @TUIBuilder header: @escaping () -> [any TUIView] = { [] },
         @TUIBuilder footer: @escaping () -> [any TUIView] = { [] },
-        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil
+        selection: TableSelectionConfiguration<ID>? = nil,
+        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil,
+        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>]
     ) {
         self.data = data
-        self.columns = columns()
         self.columnSpacing = max(0, columnSpacing)
         self.rowSpacing = max(0, rowSpacing)
         self.divider = divider
         self.headerBuilder = header
         self.footerBuilder = footer
         self.rowStyle = rowStyle
+        self.selectionConfiguration = selection
         self.idResolver = id
+        self.columns = columns()
     }
 
     public var body: some TUIView { self }
@@ -236,7 +353,7 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         var measuredWidths = renderedHeaderCells.map(\.visibleWidth)
 
         for (index, element) in data.enumerated() {
-            _ = idResolver(element)
+            let id = idResolver(element)
             var rowCells: [RenderedCell] = []
             rowCells.reserveCapacity(columns.count)
             for column in columns {
@@ -245,7 +362,7 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
                 rowCells.append(cell)
             }
             let style = rowStyle?(element, index)
-            renderedRows.append(RenderedRow(cells: rowCells, style: style))
+            renderedRows.append(RenderedRow(id: id, cells: rowCells, style: style))
         }
 
         let resolvedWidths = zip(columns, measuredWidths).map { column, measured in
@@ -302,7 +419,13 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         var lines: [String] = []
         lines.reserveCapacity(rows.count * (columnWidths.count + rowSpacing + 1))
         for (index, row) in rows.enumerated() {
-            lines.append(contentsOf: renderRow(cells: row.cells, columnWidths: columnWidths, style: row.style))
+            lines.append(
+                contentsOf: renderRow(
+                    cells: row.cells,
+                    columnWidths: columnWidths,
+                    style: resolvedStyle(for: row)
+                )
+            )
             if rowSpacing > 0 && index < rows.count - 1 {
                 for _ in 0..<rowSpacing {
                     lines.append("")
@@ -454,7 +577,19 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         }
     }
 
+    private func resolvedStyle(for row: RenderedRow) -> TableRowStyle? {
+        var style = row.style
+        if let selectionConfiguration, selectionConfiguration.isSelected(row.id) {
+            style = style?.merging(selectionConfiguration.selectionStyle) ?? selectionConfiguration.selectionStyle
+        }
+        if let selectionConfiguration, selectionConfiguration.isFocused(row.id) {
+            style = style?.merging(selectionConfiguration.focusedStyle) ?? selectionConfiguration.focusedStyle
+        }
+        return style
+    }
+
     private struct RenderedRow {
+        let id: ID
         let cells: [RenderedCell]
         let style: TableRowStyle?
     }
@@ -466,10 +601,11 @@ public extension Table where Data.Element: Identifiable, Data.Element.ID == ID {
         columnSpacing: Int = 2,
         rowSpacing: Int = 0,
         divider: TableDividerStyle = .none,
-        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>],
         @TUIBuilder header: @escaping () -> [any TUIView] = { [] },
         @TUIBuilder footer: @escaping () -> [any TUIView] = { [] },
-        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil
+        selection: TableSelectionConfiguration<ID>? = nil,
+        rowStyle: ((Row, Int) -> TableRowStyle?)? = nil,
+        @TableColumnBuilder<Row> columns: () -> [TableColumn<Row>]
     ) {
         self.init(
             data,
@@ -477,10 +613,11 @@ public extension Table where Data.Element: Identifiable, Data.Element.ID == ID {
             columnSpacing: columnSpacing,
             rowSpacing: rowSpacing,
             divider: divider,
-            columns: columns,
             header: header,
             footer: footer,
-            rowStyle: rowStyle
+            selection: selection,
+            rowStyle: rowStyle,
+            columns: columns
         )
     }
 }

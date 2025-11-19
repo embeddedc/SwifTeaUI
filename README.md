@@ -161,24 +161,30 @@ The scene maps terminal key events to reducer actions, `@State` keeps the counte
 `Table` brings SwiftUI-style column definitions to the terminal. Pick from `.fixed`, `.fitContent`, or `.flex(min:max:)` widths, opt into headers/footers, and let SwifTeaUI handle ANSI-aware measurement for multi-line cells. Row styling is opt-in per index so you can emphasize focus, selections, or zebra striping:
 
 ```swift
+@State private var selectedProcessIDs = Set<Process.ID>()
+@FocusState private var focusedProcess: Process.ID?
+
 Table(
     processes,
     divider: .line(color: .brightBlack, isBold: true),
+    selection: .multiple($selectedProcessIDs, focused: $focusedProcess),
     rowStyle: TableRowStyle.stripedRows(
         evenStyle: TableRowStyle.stripe(backgroundColor: .brightBlack),
         oddStyle: TableRowStyle.focused(accent: .cyan)
-    )
-) {
-    TableColumn("Name", width: .flex(min: 12)) { process in
-        Text(process.name).bold()
+    ),
+    columns: {
+        TableColumn("Name", value: \Process.name, width: .flex(min: 12)) { name in
+            name.uppercased()
+        }
+        TableColumn("State", value: \Process.state, width: .fixed(12), alignment: .trailing)
+        TableColumn("Duration", value: \Process.duration) { duration in
+            "\(duration)s"
+        }
     }
-    TableColumn("State", width: .fixed(12), alignment: .trailing) { process in
-        StatusBadge(state: process.state)
-    }
-}
+)
 ```
 
-`TableRowStyle` now exposes underline/dim/reverse toggles plus optional borders (`▌ row ▐`) so focused rows read clearly without building ad-hoc view wrappers. Divider lines accept foreground/background colors (or a fully custom renderer) whenever you need to match a theme instead of relying on plain ASCII separators.
+`TableRowStyle` now exposes underline/dim/reverse toggles plus optional borders (`▌ row ▐`) so focused rows read clearly without building ad-hoc view wrappers. Divider lines accept foreground/background colors (or a fully custom renderer) whenever you need to match a theme instead of relying on plain ASCII separators. `TableColumn(value:)` mirrors SwiftUI’s key-path sugar and pipes values through a formatter closure to avoid rewriting boilerplate `Text` views, and `selection: .single/.multiple` bindings highlight whichever IDs your reducer keeps in state (with customizable focus vs. selection styles).
 
 ### Terminal Awareness
 

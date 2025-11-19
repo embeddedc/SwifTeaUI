@@ -17,21 +17,27 @@ struct TableTests {
             Package(id: 2, name: "Tuist", version: "4.0.0", status: "Outdated")
         ]
 
-        let table = Table(packages, divider: .line()) {
-            TableColumn(width: .fitContent, alignment: .leading, header: { Text("Package") }) { (item: Package) in
-                Text(item.name)
+        let table = Table(
+            packages,
+            divider: .line(),
+            header: {
+                Text("Packages")
+            },
+            footer: {
+                Text("2 total")
+            },
+            columns: {
+                TableColumn(width: .fitContent, alignment: .leading, header: { Text("Package") }) { (item: Package) in
+                    Text(item.name)
+                }
+                TableColumn(width: .fitContent, alignment: .leading, header: { Text("Version") }) { (item: Package) in
+                    Text(item.version)
+                }
+                TableColumn(width: .fitContent, alignment: .leading, header: { Text("Status") }) { (item: Package) in
+                    Text(item.status)
+                }
             }
-            TableColumn(width: .fitContent, alignment: .leading, header: { Text("Version") }) { (item: Package) in
-                Text(item.version)
-            }
-            TableColumn(width: .fitContent, alignment: .leading, header: { Text("Status") }) { (item: Package) in
-                Text(item.status)
-            }
-        } header: {
-            Text("Packages")
-        } footer: {
-            Text("2 total")
-        }
+        )
 
         let lines = table.render().split(separator: "\n").map(String.init)
         #expect(lines == [
@@ -50,14 +56,19 @@ struct TableTests {
             Package(id: 1, name: "Mint", version: "0.17.2", status: "Installed")
         ]
 
-        let table = Table(packages, columnSpacing: 1, divider: .none) {
-            TableColumn(width: .fixed(10), alignment: .trailing, header: { Text("Name") }) { (item: Package) in
-                Text(item.name)
+        let table = Table(
+            packages,
+            columnSpacing: 1,
+            divider: .none,
+            columns: {
+                TableColumn(width: .fixed(10), alignment: .trailing, header: { Text("Name") }) { (item: Package) in
+                    Text(item.name)
+                }
+                TableColumn(width: .flex(min: 5, max: 8), alignment: .center, header: { Text("Ver") }) { (item: Package) in
+                    Text(item.version)
+                }
             }
-            TableColumn(width: .flex(min: 5, max: 8), alignment: .center, header: { Text("Ver") }) { (item: Package) in
-                Text(item.version)
-            }
-        }
+        )
 
         let lines = table.render().split(separator: "\n").map(String.init)
         #expect(lines == [
@@ -75,17 +86,19 @@ struct TableTests {
 
         let table = Table(
             packages,
-            divider: .none
-        ) {
-            TableColumn(width: .fitContent, alignment: .leading, header: { Text("Name") }) { (item: Package) in
-                Text(item.name)
+            divider: .none,
+            rowStyle: { _, index in
+                index == 0 ? TableRowStyle(backgroundColor: .cyan, isBold: true) : nil
+            },
+            columns: {
+                TableColumn(width: .fitContent, alignment: .leading, header: { Text("Name") }) { (item: Package) in
+                    Text(item.name)
+                }
+                TableColumn(width: .fitContent, alignment: .leading, header: { Text("Version") }) { (item: Package) in
+                    Text(item.version)
+                }
             }
-            TableColumn(width: .fitContent, alignment: .leading, header: { Text("Version") }) { (item: Package) in
-                Text(item.version)
-            }
-        } rowStyle: { _, index in
-            index == 0 ? TableRowStyle(backgroundColor: .cyan, isBold: true) : nil
-        }
+        )
 
         let output = table.render()
         #expect(output.contains(ANSIColor.cyan.backgroundCode))
@@ -98,17 +111,22 @@ struct TableTests {
             Package(id: 1, name: "Mint", version: "0.17.2", status: "Installed")
         ]
 
-        let table = Table(packages, divider: .none) {
-            TableColumn("Name") { (item: Package) in
-                Text(item.name)
+        let table = Table(
+            packages,
+            divider: .none,
+            rowStyle: { _, _ in
+                TableRowStyle(
+                    foregroundColor: .magenta,
+                    isUnderlined: true,
+                    border: .init(leading: "▶ ", trailing: " ◀")
+                )
+            },
+            columns: {
+                TableColumn("Name") { (item: Package) in
+                    Text(item.name)
+                }
             }
-        } rowStyle: { _, _ in
-            TableRowStyle(
-                foregroundColor: .magenta,
-                isUnderlined: true,
-                border: .init(leading: "▶ ", trailing: " ◀")
-            )
-        }
+        )
 
         let rows = table.render().split(separator: "\n")
         let line = rows.dropFirst().first ?? ""
@@ -128,15 +146,15 @@ struct TableTests {
         let table = Table(
             packages,
             divider: .none,
+            rowStyle: TableRowStyle.stripedRows(
+                evenStyle: TableRowStyle(backgroundColor: .brightBlack),
+                oddStyle: TableRowStyle(backgroundColor: .brightBlue)
+            ),
             columns: {
                 TableColumn("Name") { (item: Package) in
                     Text(item.name)
                 }
-            },
-            rowStyle: TableRowStyle.stripedRows(
-                evenStyle: TableRowStyle(backgroundColor: .brightBlack),
-                oddStyle: TableRowStyle(backgroundColor: .brightBlue)
-            )
+            }
         )
 
         let lines = table.render().split(separator: "\n").dropFirst()
@@ -151,15 +169,68 @@ struct TableTests {
             Package(id: 1, name: "Mint", version: "0.17.2", status: "Installed")
         ]
 
-        let table = Table(packages, divider: .line(character: "─", color: .yellow, backgroundColor: .brightBlack, isBold: true)) {
-            TableColumn("Name") { (item: Package) in
-                Text(item.name)
+        let table = Table(
+            packages,
+            divider: .line(character: "─", color: .yellow, backgroundColor: .brightBlack, isBold: true),
+            columns: {
+                TableColumn("Name") { (item: Package) in
+                    Text(item.name)
+                }
             }
-        }
+        )
 
         let output = table.render()
         #expect(output.contains(ANSIColor.yellow.rawValue))
         #expect(output.contains(ANSIColor.brightBlack.backgroundCode))
         #expect(output.contains("\u{001B}[1m"))
+    }
+
+    @Test("Key-path column sugar renders values with formatter")
+    func testKeyPathColumnSugar() {
+        let packages = [
+            Package(id: 1, name: "Mint", version: "0.17.2", status: "Installed")
+        ]
+
+        let table = Table(
+            packages,
+            columns: {
+                TableColumn("Name", value: \Package.name)
+                TableColumn("Version", value: \Package.version) { version in
+                    "v\(version)"
+                }
+            }
+        )
+
+        let lines = table.render().split(separator: "\n").map(String.init)
+        #expect(lines.contains { $0.contains("Name") && $0.contains("Version") })
+        #expect(lines.contains { $0.contains("Mint") && $0.contains("v0.17.2") })
+    }
+
+    @Test("Selection bindings highlight rows and focused row wins precedence")
+    func testSelectionBindings() {
+        let packages = [
+            Package(id: 1, name: "Mint", version: "0.17.2", status: "Installed"),
+            Package(id: 2, name: "Tuist", version: "4.0.0", status: "Outdated")
+        ]
+
+        let table = Table(
+            packages,
+            selection: .multiple(
+                .constant([2]),
+                focused: .constant(1),
+                selectionStyle: TableRowStyle(backgroundColor: .magenta),
+                focusedStyle: TableRowStyle(foregroundColor: .yellow, border: .init(leading: ">", trailing: "<"))
+            ),
+            columns: {
+                TableColumn("Name", value: \Package.name)
+            }
+        )
+
+        let lines = table.render().split(separator: "\n")
+        // Header + rows, take body
+        let body = Array(lines.dropFirst().prefix(packages.count))
+        #expect(body[0].contains(">"))
+        #expect(body[0].contains(ANSIColor.yellow.rawValue))
+        #expect(body[1].contains(ANSIColor.magenta.backgroundCode))
     }
 }
