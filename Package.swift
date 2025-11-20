@@ -7,7 +7,8 @@ let package = Package(
     products: [
         // Users typically `import SwifTeaUI` for the runtime + DSL
         .library(name: "SwifTeaUI", targets: ["SwifTeaUI"]),
-        .executable(name: "SwifTeaGalleryExample", targets: ["SwifTeaGalleryExample"])
+        .executable(name: "SwifTeaGalleryExample", targets: ["SwifTeaGalleryExample"]),
+        .executable(name: "SwifTeaPerfHarness", targets: ["SwifTeaPerfHarness"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-testing.git", branch: "main")
@@ -32,6 +33,11 @@ let package = Package(
             name: "SwifTeaPreviewDemo",
             dependencies: ["GalleryExample"],
             path: "Sources/ExampleApps/PreviewDemo"
+        ),
+        .executableTarget(
+            name: "SwifTeaPerfHarness",
+            dependencies: ["GalleryExample"],
+            path: "Sources/ExampleApps/PerfHarness"
         ),
         .target(
             name: "SnapshotTestSupport",

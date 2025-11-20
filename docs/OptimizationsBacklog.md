@@ -1,7 +1,7 @@
 # Optimizations Backlog
 
-- **Perf harness**
-  - Add a micro-benchmark that renders the Gallery scene in a loop and records build + write timings to validate the optimizations below before rollout.
+- **Perf harness** (done)
+  - Adds a micro-benchmark that renders the Gallery scene in a loop and records build + write timings to validate the optimizations below before rollout.
 - **Adaptive render loop**
   - Track a “render needed” flag driven by model updates/effects and terminal resize, and sleep on I/O otherwise to avoid building frames every tick. Add idle FPS throttle to reduce CPU when idle.
 - **Terminal size change detection**

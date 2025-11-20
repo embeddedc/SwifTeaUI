@@ -1,0 +1,58 @@
+{
+  "bytes" : {
+    "max" : 14356,
+    "mean" : 14356,
+    "median" : 14356
+  },
+  "commit" : "0026cc4",
+  "config" : {
+    "columns" : 120,
+    "commit" : "0026cc4",
+    "rows" : 40,
+    "sampleIterations" : 200,
+    "warmupIterations" : 20
+  },
+  "render" : {
+    "maxNS" : 2978208,
+    "meanNS" : 2651593.345,
+    "medianNS" : 2638041,
+    "p95NS" : 2769083
+  },
+  "timestamp" : "2025-11-20T03:21:18Z",
+  "version" : 1,
+  "write" : {
+    "maxNS" : 39792,
+    "meanNS" : 2384.565,
+    "medianNS" : 1333,
+    "p95NS" : 4250
+  }
+}
+{
+  "bytes" : {
+    "max" : 14356,
+    "mean" : 14356,
+    "median" : 14356
+  },
+  "commit" : "0026cc4",
+  "config" : {
+    "columns" : 120,
+    "commit" : "0026cc4",
+    "rows" : 40,
+    "sampleIterations" : 200,
+    "warmupIterations" : 20
+  },
+  "render" : {
+    "maxNS" : 2942750,
+    "meanNS" : 2644340.42,
+    "medianNS" : 2636875,
+    "p95NS" : 2731625
+  },
+  "timestamp" : "2025-11-20T03:21:52Z",
+  "version" : 1,
+  "write" : {
+    "maxNS" : 40917,
+    "meanNS" : 2345.845,
+    "medianNS" : 1250,
+    "p95NS" : 3875
+  }
+}
