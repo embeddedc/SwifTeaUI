@@ -136,18 +136,15 @@ public struct VStack: TUIView {
     public func render() -> String {
         guard !children.isEmpty else { return "" }
 
-        let rendered = children.map { $0.render() }
-        let widths = rendered.map { string -> Int in
-            string.splitLinesPreservingEmpty().map { HStack.visibleWidth(of: $0) }.max() ?? 0
-        }
-        let maxWidth = widths.max() ?? 0
+        let rendered = children.map { RenderedView(lines: $0.render().splitLinesPreservingEmpty()) }
+        let maxWidth = rendered.map { $0.maxWidth }.max() ?? 0
 
         var lines: [String] = []
         lines.reserveCapacity(children.count * (spacing + 1))
 
         for (index, output) in rendered.enumerated() {
             let padded = Self.pad(output, toVisibleWidth: maxWidth, alignment: alignment)
-            lines.append(padded)
+            lines.append(contentsOf: padded.lines)
             if spacing > 0 && index < rendered.count - 1 {
                 for _ in 0..<spacing {
                     lines.append("")
@@ -178,32 +175,32 @@ public struct VStack: TUIView {
     }
 
     private static func pad(
-        _ string: String,
+        _ rendered: RenderedView,
         toVisibleWidth width: Int,
         alignment: Alignment
-    ) -> String {
-        guard width > 0 else { return string }
-        if alignment == .leading { return string }
+    ) -> RenderedView {
+        guard width > 0 else { return rendered }
+        if alignment == .leading { return rendered }
 
-        let lines = string.splitLinesPreservingEmpty()
-        if lines.isEmpty {
-            return Self.paddedLine("", width: width, alignment: alignment)
+        if rendered.lines.isEmpty {
+            return RenderedView(lines: [Self.paddedLine("", currentWidth: 0, width: width, alignment: alignment)])
         }
 
-        let padded = lines.map { line in
-            Self.paddedLine(line, width: width, alignment: alignment)
+        let padded = rendered.lines.enumerated().map { index, line in
+            let currentWidth = rendered.widths[index]
+            return Self.paddedLine(line, currentWidth: currentWidth, width: width, alignment: alignment)
         }
 
-        return padded.joined(separator: "\n")
+        return RenderedView(lines: padded)
     }
 
     private static func paddedLine(
         _ line: String,
+        currentWidth: Int,
         width: Int,
         alignment: Alignment
     ) -> String {
         if alignment == .leading { return line }
-        let currentWidth = HStack.visibleWidth(of: line)
         guard currentWidth < width else { return line }
         let padding = width - currentWidth
 
@@ -260,9 +257,9 @@ public struct HStack: TUIView {
     public func render() -> String {
         guard !children.isEmpty else { return "" }
 
-        let renderedColumns = children.map { $0.render().splitLinesPreservingEmpty() }
-        let columnWidths = renderedColumns.map { $0.map(Self.visibleWidth(of:)).max() ?? 0 }
-        let columnHeights = renderedColumns.map(\.count)
+        let renderedColumns = children.map { RenderedView(lines: $0.render().splitLinesPreservingEmpty()) }
+        let columnWidths = renderedColumns.map { $0.maxWidth }
+        let columnHeights = renderedColumns.map { $0.height }
         let maxRows = columnHeights.max() ?? 0
         let spacingString = String(repeating: " ", count: spacing)
 
@@ -285,9 +282,9 @@ public struct HStack: TUIView {
             var pieces: [String] = []
             pieces.reserveCapacity(children.count)
 
-            for (index, lines) in renderedColumns.enumerated() {
+            for (index, rendered) in renderedColumns.enumerated() {
                 let offsetRow = row - verticalOffsets[index]
-                let line = (offsetRow >= 0 && offsetRow < lines.count) ? lines[offsetRow] : ""
+                let line = (offsetRow >= 0 && offsetRow < rendered.lines.count) ? rendered.lines[offsetRow] : ""
                 let padded = Self.pad(
                     line,
                     toVisibleWidth: columnWidths[index],

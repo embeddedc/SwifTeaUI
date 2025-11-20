@@ -105,13 +105,13 @@ public struct ScrollView<Content: TUIView>: TUIView {
     }
 
     private func renderVertical() -> String {
-        var lines = content.render().splitLinesPreservingEmpty()
-        if lines.isEmpty {
-            lines = [""]
+        var rendered = RenderedView(lines: content.render().splitLinesPreservingEmpty())
+        if rendered.lines.isEmpty {
+            rendered = RenderedView(lines: [""])
         }
 
-        contentLength?.wrappedValue = lines.count
-        let maxOffset = max(0, lines.count - viewport)
+        contentLength?.wrappedValue = rendered.height
+        let maxOffset = max(0, rendered.height - viewport)
 
         var resolvedOffset = clamp(offset: offset.wrappedValue, max: maxOffset)
         if !isScrollDisabled, pinnedToBottom?.wrappedValue == true {
@@ -120,7 +120,7 @@ public struct ScrollView<Content: TUIView>: TUIView {
                   let shouldFollow = followActiveLine?.wrappedValue,
                   shouldFollow,
                   let activeLine = activeLine?.wrappedValue {
-            let clampedActive = max(0, min(activeLine, lines.count - 1))
+            let clampedActive = max(0, min(activeLine, rendered.height - 1))
             if clampedActive < resolvedOffset {
                 resolvedOffset = clampedActive
             } else if clampedActive >= resolvedOffset + viewport {
@@ -138,8 +138,8 @@ public struct ScrollView<Content: TUIView>: TUIView {
 
         for index in 0..<viewport {
             let source = resolvedOffset + index
-            if source < lines.count {
-                visible.append(lines[source])
+            if source < rendered.lines.count {
+                visible.append(rendered.lines[source])
             } else {
                 visible.append("")
             }
@@ -157,13 +157,12 @@ public struct ScrollView<Content: TUIView>: TUIView {
     }
 
     private func renderHorizontal() -> String {
-        var lines = content.render().splitLinesPreservingEmpty()
-        if lines.isEmpty {
-            lines = [""]
+        var rendered = RenderedView(lines: content.render().splitLinesPreservingEmpty())
+        if rendered.lines.isEmpty {
+            rendered = RenderedView(lines: [""])
         }
 
-        let widths = lines.map { HStack.visibleWidth(of: $0) }
-        let contentWidth = widths.max() ?? 0
+        let contentWidth = rendered.maxWidth
         contentLength?.wrappedValue = contentWidth
         let maxOffset = max(0, contentWidth - viewport)
 
@@ -177,7 +176,7 @@ public struct ScrollView<Content: TUIView>: TUIView {
             offset.wrappedValue = resolvedOffset
         }
 
-        var visible = lines.map { sliceLine($0, offset: resolvedOffset, width: viewport) }
+        var visible = rendered.lines.map { sliceLine($0, offset: resolvedOffset, width: viewport) }
         if indicatorVisibility == .automatic {
             visible = applyHorizontalIndicators(
                 to: visible,

@@ -6,6 +6,25 @@ public protocol TUIView {
     func render() -> String
 }
 
+/// A lightweight rendering result carrying lines and dimensions, used to avoid
+/// repeated splitting/measuring during layout composition.
+struct RenderedView {
+    var lines: [String]
+    var widths: [Int] // visible width per line
+
+    init(lines: [String]) {
+        self.lines = lines
+        self.widths = lines.map { HStack.visibleWidth(of: $0) }
+    }
+
+    var height: Int { lines.count }
+    var maxWidth: Int { widths.max() ?? 0 }
+
+    func joined() -> String {
+        lines.joined(separator: "\n")
+    }
+}
+
 public extension TUIView {
     func render() -> String {
         body.render()
