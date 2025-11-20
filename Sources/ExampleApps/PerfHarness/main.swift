@@ -49,6 +49,7 @@ struct SwifTeaPerfHarness {
             let report = Report(
                 timestamp: ISO8601DateFormatter().string(from: Date()),
                 commit: config.commit,
+                runID: config.runID,
                 config: config,
                 render: renderStats.snapshot,
                 write: writeStats.snapshot,
@@ -69,6 +70,7 @@ struct SwifTeaPerfHarness {
         var rows: Int = 40
         var commit: String? = nil
         var outputPath: String? = nil
+        var runID: String? = nil
 
         private enum CodingKeys: String, CodingKey {
             case warmupIterations
@@ -76,6 +78,7 @@ struct SwifTeaPerfHarness {
             case columns
             case rows
             case commit
+            case runID
         }
 
         static func fromEnvironment() -> Config {
@@ -97,6 +100,9 @@ struct SwifTeaPerfHarness {
             }
             if let value = ProcessInfo.processInfo.environment["PERF_OUTPUT_PATH"], !value.isEmpty {
                 config.outputPath = value
+            }
+            if let value = ProcessInfo.processInfo.environment["PERF_RUN_ID"], !value.isEmpty {
+                config.runID = value
             }
             return config
         }
@@ -174,6 +180,7 @@ struct SwifTeaPerfHarness {
         var version: Int = 1
         var timestamp: String
         var commit: String?
+        var runID: String?
         var config: Config
         var render: StatSnapshot
         var write: StatSnapshot
