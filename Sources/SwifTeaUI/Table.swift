@@ -344,21 +344,21 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
         }
 
         let renderedHeaderCells = columns.map { column -> RenderedCell in
-            RenderedCell(lines: renderViews(column.headerBuilder()))
+            RenderedCell(rendered: RenderedView(lines: renderViews(column.headerBuilder())))
         }
 
         var renderedRows: [RenderedRow] = []
         renderedRows.reserveCapacity(data.count)
 
-        var measuredWidths = renderedHeaderCells.map(\.visibleWidth)
+        var measuredWidths = renderedHeaderCells.map(\.maxWidth)
 
         for (index, element) in data.enumerated() {
             let id = idResolver(element)
             var rowCells: [RenderedCell] = []
             rowCells.reserveCapacity(columns.count)
             for column in columns {
-                let cell = RenderedCell(lines: renderViews(column.cellBuilder(element)))
-                measuredWidths[rowCells.count] = max(measuredWidths[rowCells.count], cell.visibleWidth)
+                let cell = RenderedCell(rendered: RenderedView(lines: renderViews(column.cellBuilder(element))))
+                measuredWidths[rowCells.count] = max(measuredWidths[rowCells.count], cell.maxWidth)
                 rowCells.append(cell)
             }
             let style = rowStyle?(element, index)
@@ -454,6 +454,7 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
                 let line = lineIndex < cell.lines.count ? cell.lines[lineIndex] : ""
                 let padded = Self.pad(
                     line,
+                    currentWidth: cell.width(at: lineIndex),
                     to: columnWidths[columnIndex],
                     alignment: columns[columnIndex].alignment
                 )
@@ -551,10 +552,11 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
 
     private static func pad(
         _ line: String,
+        currentWidth: Int,
         to width: Int,
         alignment: TableColumn<Row>.Alignment
     ) -> String {
-        let visibleWidth = HStack.visibleWidth(of: line)
+        let visibleWidth = currentWidth >= 0 ? currentWidth : HStack.visibleWidth(of: line)
         guard visibleWidth < width else { return line }
         let padding = width - visibleWidth
         switch alignment {
@@ -570,10 +572,16 @@ public struct Table<Data: RandomAccessCollection, ID: Hashable>: TUIView {
     }
 
     private struct RenderedCell {
-        let lines: [String]
+        let rendered: RenderedView
 
-        var visibleWidth: Int {
-            lines.map { HStack.visibleWidth(of: $0) }.max() ?? 0
+        var lines: [String] { rendered.lines }
+        var maxWidth: Int { rendered.maxWidth }
+
+        func width(at line: Int) -> Int {
+            if line >= 0 && line < rendered.widths.count {
+                return rendered.widths[line]
+            }
+            return -1
         }
     }
 
