@@ -133,7 +133,7 @@ private struct ModalOverlay<Base: TUIView>: TUIView {
 
     var body: some TUIView {
         ZStack(alignment: .center) {
-            base.foregroundColor(.brightBlack)
+            base
             Border(
                 padding: 2,
                 color: modal.style.borderColor,
