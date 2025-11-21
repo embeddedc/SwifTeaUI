@@ -13,17 +13,15 @@ public struct TextField: TUIView {
     private let focusStyle: FocusStyle
     private let blinkingCursor: Bool
     private let cursorPosition: Binding<Int>?
-    private let cursorIsBlock: Bool
 
     public init(
         _ placeholder: String = "",
         text: Binding<String>,
         focus: Binding<Bool>? = nil,
-        cursor: String = "▌",
+        cursor: String = " ",
         focusStyle: FocusStyle = .default,
         blinkingCursor: Bool = false,
-        cursorPosition: Binding<Int>? = nil,
-        cursorIsBlock: Bool? = nil
+        cursorPosition: Binding<Int>? = nil
     ) {
         self.placeholder = placeholder
         self.text = text
@@ -32,7 +30,6 @@ public struct TextField: TUIView {
         self.focusStyle = focusStyle
         self.blinkingCursor = blinkingCursor
         self.cursorPosition = cursorPosition
-        self.cursorIsBlock = cursorIsBlock ?? Self.isBlockCursor(cursor)
     }
 
     public func render() -> String {
@@ -61,21 +58,25 @@ public struct TextField: TUIView {
         renderText.insert(contentsOf: sentinel, at: index)
 
         let cursorSeed = underlyingChar.map(String.init) ?? cursorSymbol
-        let cursor = blinkingCursor
+        let cursorDisplay = blinkingCursor
             ? CursorBlinker.shared.cursor(for: cursorSeed)
             : cursorSeed
 
-        let isHiddenCursor = cursor.allSatisfy { $0 == " " }
+        let isHiddenCursor = cursorDisplay.allSatisfy { $0 == " " }
         let overlay: String
-        if isHiddenCursor, let underlyingChar {
-            // Keep the character visible when the blink phase is hidden.
-            overlay = String(underlyingChar)
-        } else if cursorIsBlock {
-            overlay = "\u{001B}[7m" + cursor + ANSIColor.reset.rawValue
-        } else if let underlyingChar {
-            overlay = "\u{001B}[4m" + String(underlyingChar) + ANSIColor.reset.rawValue
+        if isHiddenCursor {
+            if let ch = underlyingChar {
+                let str = String(ch)
+                if str.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    overlay = "\u{001B}[7m" + str + ANSIColor.reset.rawValue
+                } else {
+                    overlay = str
+                }
+            } else {
+                overlay = "\u{001B}[7m \u{001B}[0m"
+            }
         } else {
-            overlay = cursor
+            overlay = "\u{001B}[7m" + cursorDisplay + ANSIColor.reset.rawValue
         }
         if let range = renderText.range(of: sentinel) {
             renderText.replaceSubrange(range, with: overlay)
@@ -92,8 +93,7 @@ public struct TextField: TUIView {
             cursor: cursorSymbol,
             focusStyle: style,
             blinkingCursor: blinkingCursor,
-            cursorPosition: cursorPosition,
-            cursorIsBlock: cursorIsBlock
+            cursorPosition: cursorPosition
         )
     }
 
@@ -110,8 +110,7 @@ public struct TextField: TUIView {
             cursor: cursorSymbol,
             focusStyle: focusStyle,
             blinkingCursor: enabled,
-            cursorPosition: cursorPosition,
-            cursorIsBlock: cursorIsBlock
+            cursorPosition: cursorPosition
         )
     }
 
@@ -123,8 +122,7 @@ public struct TextField: TUIView {
             cursor: cursorSymbol,
             focusStyle: focusStyle,
             blinkingCursor: blinkingCursor,
-            cursorPosition: cursorPosition,
-            cursorIsBlock: cursorIsBlock
+            cursorPosition: cursorPosition
         )
     }
 
@@ -136,15 +134,8 @@ public struct TextField: TUIView {
             cursor: cursorSymbol,
             focusStyle: focusStyle,
             blinkingCursor: blinkingCursor,
-            cursorPosition: binding,
-            cursorIsBlock: cursorIsBlock
+            cursorPosition: binding
         )
-    }
-
-    private static func isBlockCursor(_ symbol: String) -> Bool {
-        let blocks: Set<String> = ["█", "▉", "▊", "▋", "▓", "▙", "▛", "▜", "▟", "■"]
-        if blocks.contains(symbol) { return true }
-        return symbol.unicodeScalars.count > 1
     }
 }
 
