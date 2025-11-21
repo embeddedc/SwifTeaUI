@@ -34,10 +34,19 @@ public struct TextField: TUIView {
         let body = value.isEmpty ? placeholder : value
         let isFocused = focus?.wrappedValue ?? true
         guard isFocused else { return body }
+
+        let sentinel = "\u{0000}"
+        var renderText = body + sentinel
+
         let cursor = blinkingCursor
             ? CursorBlinker.shared.cursor(for: cursorSymbol)
             : cursorSymbol
-        return focusStyle.apply(to: body + cursor)
+        let overlay = "\u{001B}[7m" + cursor + ANSIColor.reset.rawValue
+        if let range = renderText.range(of: sentinel) {
+            renderText.replaceSubrange(range, with: overlay)
+        }
+
+        return focusStyle.apply(to: renderText)
     }
 
     public func focusRingStyle(_ style: FocusStyle) -> TextField {
