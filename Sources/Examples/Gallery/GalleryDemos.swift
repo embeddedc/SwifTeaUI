@@ -435,11 +435,22 @@ struct TableDemoModel {
     }
 
     private func selectionConfiguration(theme: SwifTeaTheme) -> TableSelectionConfiguration<Row.ID> {
-        TableSelectionConfiguration.single(
+        let selectionColors = self.selectionColors(for: theme)
+        return TableSelectionConfiguration.single(
             $selectedID,
             focused: $focusedID,
-            selectionStyle: .selected(backgroundColor: theme.success),
+            selectionStyle: .selected(
+                foregroundColor: selectionColors.foreground,
+                backgroundColor: selectionColors.background
+            ),
             focusedStyle: .focused(accent: theme.accent)
+        )
+    }
+
+    private func selectionColors(for theme: SwifTeaTheme) -> (foreground: ANSIColor?, background: ANSIColor) {
+        (
+            foreground: theme.selectionForeground,
+            background: theme.selectionBackground ?? theme.success
         )
     }
 

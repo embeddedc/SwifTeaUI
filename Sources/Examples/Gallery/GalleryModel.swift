@@ -85,6 +85,7 @@ struct GalleryModel {
         overlaysDemo: OverlayDemoModel = OverlayDemoModel(),
         overlays: OverlayPresenter = OverlayPresenter(),
         themes: [SwifTeaTheme] = [
+            .lumenGlass,
             .bubbleTeaNeon,
             .bubbleTeaDark,
             .bubbleTeaLight,
