@@ -15,6 +15,7 @@ private struct CountingView: TUIView {
     }
 }
 
+@Suite(.serialized)
 struct ForEachTests {
     @Test("Diffing reuses cached renders for unchanged elements")
     func testForEachDiffingReuse() {
